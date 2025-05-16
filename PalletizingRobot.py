@@ -120,6 +120,7 @@ class PalletizingRobot:
         corde=[Xr,Yr]    # -0.2561*u + 0.3541*v -86.17
         # Print coordenadas objetivo en el sistema del robot
         print(f"[MAP] Robot → X={Xr:.1f} mm, Y={Yr:.1f} mm")
+        print("roberto come trabas")
         self.robot.open_gripper()
         # Dibujar en pantalla
     
