@@ -41,8 +41,8 @@ class PalletizingRobot:
         self.object_detected = False
         self.target_x = 0.0 # Initialize target coordinates
         self.target_y = 0.0 # Initialize target coordinates
-        self.piece_angle = 0.0 # Initialize piece_angle
-        self.robot_x = 0.0 # Initialize robot_x from the original map_camara2robot
+        # self.piece_angle = 0.0 # Removed as it was tied to the old robot_x calculation
+        # self.robot_x = 0.0 # Removed as target_x is now the primary X coordinate
 
         self.gray_thresh = gray_thresh
         self.area_thresh = area_thresh
@@ -204,7 +204,7 @@ class PalletizingRobot:
         Maps the camera coordinates (cx, cy) and detected_angle of the piece
         to the desired target position (self.target_x, self.target_y) for the robot.
         It also sets self.object_detected to True.
-        The original calculation for self.robot_x based on angle is kept for now.
+        The detected_angle might be used for robot's Rz orientation if needed.
         """
         if center_coords is None:
             self.object_detected = False
@@ -226,34 +226,11 @@ class PalletizingRobot:
         self.target_x = Xr
         self.target_y = Yr
         self.object_detected = True
-        print(f"[MAP] Robot Target → X={self.target_x:.1f} mm, Y={self.target_y:.1f} mm")
+        print(f"[MAP] Robot Target → X={self.target_x:.1f} mm, Y={self.target_y:.1f} mm, Angle (from camera): {detected_angle:.1f}°")
 
-        # --- Original calculations from the provided map_camara2robot ---
-        # This part calculates self.piece_angle and self.robot_x.
-        # It seems to be a separate calculation, possibly for an offset or a different target.
-        # If self.robot_x was intended to be the primary X target, integrate accordingly.
-        self.piece_angle = 90 - detected_angle # Using the angle from detect_box
-        
-        # Mean dimensions of the wood piece (example values)
-        piece_width = 90.0  
-        piece_height = 140.0 
-        
-        beta = np.arctan2(piece_height, piece_width) # Use arctan2 for angle in correct quadrant
-        L = np.sqrt((piece_width / 2)**2 + (piece_height / 2)**2)
-        
-        # Adjust angle for calculation if necessary (original logic)
-        angle_rad_for_calc = -self.piece_angle * (np.pi / 180) # Convert to radians, ensure consistent sign
-        
-        # This calculates an 'x' value based on the piece's angle and dimensions.
-        # Its exact purpose in relation to self.target_x needs clarification from the original design.
-        self.robot_x = L * np.sin(np.pi + angle_rad_for_calc - beta) 
-        # print(f"[MAP] Calculated self.robot_x (offset/alternative?): {self.robot_x:.1f} mm")
-
-        # The following were hints/placeholders in the original function
-        # self.robot_y_lims = None
-        # self.camera_x_center_lims = None
-        # self.robot_y = None # Note: self.target_y is now set by the affine transformation
-        # self.robot_angle = None # This might be where self.piece_angle or detected_angle is stored if needed globally
+        # If the robot's Rz orientation needs to be set based on detected_angle,
+        # you would store/use detected_angle here. For example:
+        # self.target_rz = 90 - detected_angle # Or some other mapping to robot's Rz convention
         
 
     def mozaic_generator(self):
@@ -277,94 +254,74 @@ class PalletizingRobot:
         print(f"[PICK_AND_PLACE] Target: X={self.target_x:.1f}, Y={self.target_y:.1f}")
     
         # Define pick-up and drop-off parameters
-        # pick_z is the height for approaching and picking the object
         pick_z = -33       
-        # lift_z is the height to lift the object to after picking
         lift_z = -150      
-        # drop_y is the Y-coordinate for the drop-off location
         drop_y = 470       
-        # drop_z is the Z-coordinate for placing the object at the drop-off
-        # (could be same as lift_z or different)
-        drop_x_offset = 0 # Example: if drop X depends on target_x or is fixed
+        drop_x_offset = 0 
         
-        # Fixed orientation for the gripper
+        # Fixed orientation for the gripper (rx, ry). Rz might come from detected angle if implemented.
         rx, ry, rz_orientation = -0.584, -1.702, 91.0  
+        # Example: if you stored target_rz in map_camara2robot:
+        # rz_orientation = self.target_rz 
 
         # 1. Move to approach position above the object
         approach_pose = [self.target_x, self.target_y, lift_z, rx, ry, rz_orientation]
         print(f"Moving to approach pose: {approach_pose}")
-        # self.robot.move_l_pose(np.array(approach_pose), speed=30, acc=30) # Higher speed for travel
-        # self.robot.wait_until_motion_complete()
+        self.robot.move_l_pose(np.array(approach_pose), speed=30, acc=30) 
+        self.robot.wait_until_motion_complete()
 
         # 2. Move down to pick position
         pick_pose = [self.target_x, self.target_y, pick_z, rx, ry, rz_orientation]
         print(f"Moving to pick pose: {pick_pose}")
         self.robot.move_l_pose(np.array(pick_pose), speed=20, acc=20)
         self.robot.wait_until_motion_complete()
-        
+
         # 3. Close gripper
         print("Closing gripper.")
-        self.robot.close_gripper() # Assuming this function handles the delay
-        
+        self.robot.close_gripper() 
+
         # 4. Lift the object
         lift_pose = [self.target_x, self.target_y, lift_z, rx, ry, rz_orientation]
         print(f"Moving to lift pose: {lift_pose}")
         self.robot.move_l_pose(np.array(lift_pose), speed=20, acc=20)
         self.robot.wait_until_motion_complete()
-        
+
         # 5. Move to drop-off location (above)
-        # Drop X can be same as target_x, or a fixed/calculated pallet position
-        # For now, using target_x for drop, but ideally this comes from mozaic_generator
         drop_approach_pose = [self.target_x + drop_x_offset, drop_y, lift_z, rx, ry, rz_orientation] 
         print(f"Moving to drop approach pose: {drop_approach_pose}")
         self.robot.move_l_pose(np.array(drop_approach_pose), speed=30, acc=30)
         self.robot.wait_until_motion_complete()
 
-        # 6. Move down to place object (if needed, or open gripper at lift_z)
-        # drop_place_pose = [self.target_x + drop_x_offset, drop_y, pick_z, rx, ry, rz_orientation] # Example if placing lower
-        # print(f"Moving to drop place pose: {drop_place_pose}")
-        # self.robot.move_l_pose(np.array(drop_place_pose), speed=20, acc=20)
-        # self.robot.wait_until_motion_complete()
-
-        # 7. Open gripper
+        # 6. Open gripper
         print("Opening gripper.")
-        self.robot.open_gripper() # Assuming this function handles the delay
-
-        # 8. Optionally, retract to a safe position
-        # retract_pose = [self.target_x + drop_x_offset, drop_y, lift_z, rx, ry, rz_orientation]
-        # print(f"Moving to retract pose: {retract_pose}")
-        # self.robot.move_l_pose(np.array(retract_pose), speed=30, acc=30)
-        # self.robot.wait_until_motion_complete()
+        self.robot.open_gripper() 
 
         print(f"[PICK_AND_PLACE] Sequence complete for object at X={self.target_x:.1f}, Y={self.target_y:.1f}")
-        self.object_detected = False # Reset flag after pick and place
-        self.piece_num +=1 # Increment piece count
+        self.object_detected = False 
+        self.piece_num +=1
    
     def run(self):
         """Main execution loop for the robot."""
-        # Start the camera thread
         cam_thread = threading.Thread(target=self.camera_thread, daemon=True)
         cam_thread.start()
 
         if self.robot.connect():
             print("Successfully connected to robot.")
-            self.robot.set_servo_status(1) # Turn servos on
+            self.robot.set_servo_status(1) 
 
             previous_sensor_state_is_detecting = None 
-            SENSOR_ADDRESS = 915 # Virtual output address for the sensor
+            SENSOR_ADDRESS = 915 
             
             try:
                 while True:
-                    # Read sensor state (virtual output from robot)
-                    # Assuming send_cmd returns (success_flag, result_value, id)
                     success_read, sensor_value, _ = self.robot.send_cmd("getVirtualOutput", {"addr": SENSOR_ADDRESS})
-                    
-                    current_sensor_state_is_detecting = None # Reset for current iteration
+
+                    current_sensor_state_is_detecting = None 
 
                     if success_read:
-                        if sensor_value == 1: # Assuming 1 means object present / sensor high
+                        if sensor_value == 1: 
                             current_sensor_state_is_detecting = True
-                        elif sensor_value == 0: # Assuming 0 means no object / sensor low
+                        elif sensor_value == 0: 
                             current_sensor_state_is_detecting = False
                         else:
                             print(f"Warning: Unexpected sensor value ({sensor_value}) at address {SENSOR_ADDRESS}")
@@ -375,18 +332,17 @@ class PalletizingRobot:
                         if current_sensor_state_is_detecting != previous_sensor_state_is_detecting:
                             if current_sensor_state_is_detecting is True:
                                 print("Sensor: Object detected at pick-up point.")
-                                # Object is present, and if camera has also detected and mapped it, pick and place
                                 if self.object_detected:
                                     print("Camera has also detected an object. Initiating pick and place.")
                                     self.pick_and_place()
                                 else:
                                     print("Sensor detected object, but camera has not confirmed/mapped yet.")
-                            else: # Sensor is low (false)
+                            else: 
                                 print("Sensor: No object at pick-up point / object removed.")
                             
                             previous_sensor_state_is_detecting = current_sensor_state_is_detecting
                     
-                    time.sleep(0.5) # Polling interval for the sensor
+                    time.sleep(0.5) 
 
             except KeyboardInterrupt:
                 print("Keyboard interrupt detected. Shutting down.")
@@ -394,30 +350,25 @@ class PalletizingRobot:
                 print(f"An error occurred in the main loop: {e}")
             finally:
                 print("Disconnecting from robot.")
-                self.robot.set_servo_status(0) # Turn servos off
+                self.robot.set_servo_status(0) 
                 self.robot.disconnect()
         else:
-            print("Failed to connect to the robot.")
+          print("Failed to connect to the robot.")
 
-        if cam_thread.is_alive():
-             print("Waiting for camera thread to join...") # May need a signal to stop cam_thread gracefully
-             # For a clean exit, you might need a global flag to signal the camera_thread to stop.
-             # cam_thread.join() # This might block indefinitely if not handled carefully
+          if cam_thread.is_alive():
+            print("Waiting for camera thread to join...") 
+            cam_thread.join() 
 
         print("Palletizing robot application finished.")
 
 
 if __name__ == "__main__":
-    robot_ip_address = "169.168.0.200" # Make sure this is the correct IP
+    robot_ip_address = "169.168.0.200" 
     
-    # Initialize the robot system
     palletizer = PalletizingRobot(robot_ip_address)
-    
-    # Initialize the camera (this will also run calibration)
     palletizer.initialize_camera()
     
-    # Run the main robot logic
-    if palletizer.camera_available: # Only run if camera initialized successfully
+    if palletizer.camera_available: 
         palletizer.run()
     else:
         print("Could not start robot run sequence because camera failed to initialize.")
