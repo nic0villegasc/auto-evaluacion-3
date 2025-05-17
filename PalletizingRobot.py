@@ -7,6 +7,7 @@ from CameraCalibration import CameraCalibrationHelper
 import threading
 
 """
+Prueba
 Important parameters to twitch:
 
 - gray_thresh: (0 to 255) the higher the value the less pixels it will detect
