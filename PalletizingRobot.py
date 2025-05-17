@@ -194,27 +194,39 @@ class PalletizingRobot:
 
         print(f"[PICK_AND_PLACE] Llegó a X = {self.target_x:.1f} mm")
     
-        # Solo para esta prueba no hacemos nada más
+    def scan_virtual_vars(self, inicio=528, fin=600):
+        print(f"\n[ESCANEO] Escaneando variables M desde {inicio} hasta {fin}...\n")
+        for i in range(inicio, fin):
+            try:
+                ret, val = self.robot.get_virtual_var(i)
+                if ret and val not in [0, None]:
+                    print(f"[ACTIVA] M{i} = {val}")
+            except Exception as e:
+                print(f"[ERROR] M{i} → {e}")
         self.object_detected = False
 
    
-    def run(self):
+   def run(self):
         thread = threading.Thread(target=self.camera_thread, daemon=True)
         thread.start()
-    
+
         if self.robot.connect():
             print("Successfully connected to robot")
             self.robot.set_servo_status(1)
 
-        
             while True:
-                time.sleep(0.5)  # ciclo de chequeo más rápido
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord('s'):
+                    self.scan_virtual_vars()
+
                 if self.object_detected:
-                    self.pick_and_place()  # aquí va tu llamada
+                    self.pick_and_place()
+                time.sleep(0.5)
         else:
             print("No se pudo conectar al robot")
 
         self.robot.disconnect()
+
 
 
 if __name__ == "__main__":
