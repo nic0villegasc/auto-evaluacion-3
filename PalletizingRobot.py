@@ -204,6 +204,8 @@ class PalletizingRobot:
     
         if self.robot.connect():
             print("Successfully connected to robot")
+            self.robot.set_servo_status(1)
+
         
             while True:
                 time.sleep(0.5)  # ciclo de chequeo más rápido
