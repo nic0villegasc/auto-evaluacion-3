@@ -202,13 +202,49 @@ class PalletizingRobot:
             print("Successfully connected to robot")
             self.robot.set_servo_status(1)
 
-            for i in range (0, 400 ,1):
-              # Set output IO status
-              result = self.robot.get_virtual_var(address=i)
-              print(f"Revisando variable ({i}): {result}")
+            # --- Initialization (place this *before* your while loop) ---
+            previous_sensor_state_is_detecting = None  # Stores the last known sensor state
+            SENSOR_ADDRESS = 915
             
             while True:
-                    
+                
+                result = self.robot.get_virtual_var(address=SENSOR_ADDRESS)
+
+                current_sensor_is_detecting = None # Reset for current iteration
+
+                # Check if the read was successful and result format is valid
+                if result and isinstance(result, tuple) and len(result) >= 2:
+                    read_success = result[0]
+                    sensor_value = result[1] # The middle element indicating sensor state
+
+                    if read_success is True:
+                        # We assume 1 means "high" (detecting), and 0 means "low" (not detecting)
+                        if sensor_value == 1:
+                            current_sensor_is_detecting = True
+                        elif sensor_value == 0:
+                            current_sensor_is_detecting = False
+                        else:
+                            # Optional: Handle unexpected sensor_value if it can be other than 0 or 1
+                            print(f"Advertencia: Valor de sensor inesperado ({sensor_value}) en la dirección {SENSOR_ADDRESS}")
+                            current_sensor_is_detecting = None # Treat as unknown to avoid incorrect state change message
+                    else:
+                        print(f"Advertencia: Fallo la lectura de la variable ({SENSOR_ADDRESS}). Resultado: {result}")
+                        # If read failed, current state is unknown.
+                        current_sensor_is_detecting = None 
+                        
+                else:
+                    print(f"Error: Formato de resultado inesperado de get_virtual_var para la dirección {SENSOR_ADDRESS}: {result}")
+                    current_sensor_is_detecting = None
+
+                # Only proceed if we have a validly determined current sensor state
+                if current_sensor_is_detecting is not None:
+                    if current_sensor_is_detecting != previous_sensor_state_is_detecting:
+                        if current_sensor_is_detecting is True:
+                            print("Sensor detectando")
+                        else:
+                            print("Sensor no detectando")
+                        
+                        previous_sensor_state_is_detecting = current_sensor_is_detecting
 
                 if self.object_detected:
                     self.pick_and_place()
