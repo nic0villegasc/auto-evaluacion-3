@@ -204,7 +204,7 @@ class PalletizingRobot:
 
             for i in range (0, 400 ,1):
               # Set output IO status
-              result = self.robot.get_virtual_var(self, address=i)
+              result = self.robot.get_virtual_var(address=i)
               print(f"Revisando variable ({i}): {result}")
             
             while True:
