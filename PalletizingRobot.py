@@ -193,7 +193,7 @@ class PalletizingRobot:
         # Mover robot a esa posición
         self.robot.move_l_pose(np.array(pose), speed=20, acc=20)
         self.robot.wait_until_motion_complete()
-        self.close_gripper()
+        self.robot.close_gripper()
         #accion de levantar
         levantar=[self.target_x, self.target_y, z_subida, rx, ry, rz]
         self.robot.move_l_pose(np.array(levantar),speed=20, acc=20)
