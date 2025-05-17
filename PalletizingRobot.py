@@ -119,6 +119,9 @@ class PalletizingRobot:
         Yr = c 
         corde=[Xr,Yr]    # -0.2561*u + 0.3541*v -86.17
         # Print coordenadas objetivo en el sistema del robot
+        self.target_x=Xr
+        self.target_y=Yr
+        self.object_detected=True
         print(f"[MAP] Robot → X={Xr:.1f} mm, Y={Yr:.1f} mm")
         print("roberto come trabas")
         print("caca")
@@ -172,28 +175,45 @@ class PalletizingRobot:
         return None
     
     def pick_and_place(self):
-        """
-        [INCOMPLETE FUNCTION]: Funcion that commands the robot to pick the wood
-        piece and place it in the desired pallet position (given by the 
-        mozaic_generator function).
+        if not self.object_detected:
+            return
+    
+        print("[PICK_AND_PLACE] Moviendo solo en X")
+    
+        # Coordenadas fijas excepto X
+        fixed_y = 0         # posición fija en Y
+        fixed_z = -154.092       # altura segura para no tocar la cinta
+        rx, ry, rz = -0.584, -1.702, 91.0  # orientación fija
 
-        """
-        # no hints for this one :c
-        return None
+        # Pose destino
+        pose = [self.target_x, self.target_y, fixed_z, rx, ry, rz]
+
+        # Mover robot a esa posición
+        self.robot.move_l_pose(np.array(pose))
+        self.robot.wait_until_motion_complete()
+
+        print(f"[PICK_AND_PLACE] Llegó a X = {self.target_x:.1f} mm")
+    
+        # Solo para esta prueba no hacemos nada más
+        self.object_detected = False
+
    
     def run(self):
-        thread = threading.Thread(target=self.camera_thread, daemon=True)
-        thread.start()
+    thread = threading.Thread(target=self.camera_thread, daemon=True)
+    thread.start()
+    
+    if self.robot.connect():
+        print("Successfully connected to robot")
         
-        if self.robot.connect():
-            print("Successfully connected to robot")
-            
-            # [Incomplete]: basic robot functions...
-            # self.robot.something()
-            while True:
-                time.sleep(1)
-                
-        self.robot.disconnect()
+        while True:
+            time.sleep(0.5)  # ciclo de chequeo más rápido
+            if self.object_detected:
+                self.pick_and_place()  # aquí va tu llamada
+    else:
+        print("No se pudo conectar al robot")
+
+    self.robot.disconnect()
+
 
 if __name__ == "__main__":
     # Example usage
