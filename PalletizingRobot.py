@@ -199,20 +199,20 @@ class PalletizingRobot:
 
    
     def run(self):
-    thread = threading.Thread(target=self.camera_thread, daemon=True)
-    thread.start()
+        thread = threading.Thread(target=self.camera_thread, daemon=True)
+        thread.start()
     
-    if self.robot.connect():
-        print("Successfully connected to robot")
+        if self.robot.connect():
+            print("Successfully connected to robot")
         
-        while True:
-            time.sleep(0.5)  # ciclo de chequeo más rápido
-            if self.object_detected:
-                self.pick_and_place()  # aquí va tu llamada
-    else:
-        print("No se pudo conectar al robot")
+            while True:
+                time.sleep(0.5)  # ciclo de chequeo más rápido
+                if self.object_detected:
+                    self.pick_and_place()  # aquí va tu llamada
+        else:
+            print("No se pudo conectar al robot")
 
-    self.robot.disconnect()
+        self.robot.disconnect()
 
 
 if __name__ == "__main__":
