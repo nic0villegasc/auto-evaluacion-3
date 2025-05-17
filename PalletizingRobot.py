@@ -206,7 +206,7 @@ class PalletizingRobot:
         self.object_detected = False
 
    
-   def run(self):
+    def run(self):
         thread = threading.Thread(target=self.camera_thread, daemon=True)
         thread.start()
 
