@@ -103,9 +103,29 @@ class PalletizingRobot:
         if width < height:
             angle += 90
             
-        center = (int(center[0]) + self.cam_min_lim[0], int(center[1]) + self.cam_min_lim[1])
+        # Ajuste de coordenadas al frame completo
+        cx = int(center[0]) + self.cam_min_lim[0]
+        cy = int(center[1]) + self.cam_min_lim[1]
+        center = (cx, cy)
+        # Print coordenadas desde la cámara
+        print(f"[DETECT_BOX] Cámara → x={cx}, y={cy}, ángulo={angle:.1f}°")
+        # Conversión afín a coordenadas del robot
+        u, v = cx, cy
+        a =  0.5208
+        b = -132.57 # s·sin(θ)
+        c = 0.098 # tx
+        f = -52.005764  # ty
+        Xr = a*u+b
+        Yr = c 
+        corde=[Xr,Yr]    # -0.2561*u + 0.3541*v -86.17
+        # Print coordenadas objetivo en el sistema del robot
+        print(f"[MAP] Robot → X={Xr:.1f} mm, Y={Yr:.1f} mm")
+        print("roberto come trabas")
+        print("caca")
+        self.robot.open_gripper()
+        # Dibujar en pantalla
     
-        # draw over frame
+         #draw over frame
         box = cv2.boxPoints(rect).astype(int)
         box[:, 0] =  box[:, 0] + self.cam_min_lim[0]
         box[:, 1] =  box[:, 1] + self.cam_min_lim[1]
@@ -115,6 +135,7 @@ class PalletizingRobot:
         
     
     def map_camara2robot(self, center_x, angle):
+        
 
         """
         [INCOMPLETE FUNCTION]: It should map the camera coordinates of the piece
@@ -139,6 +160,7 @@ class PalletizingRobot:
         self.camera_x_center_lims = None
         self.robot_y = None
         self.robot_angle = None
+        
 
     def mozaic_generator(self):
         """
@@ -154,6 +176,7 @@ class PalletizingRobot:
         [INCOMPLETE FUNCTION]: Funcion that commands the robot to pick the wood
         piece and place it in the desired pallet position (given by the 
         mozaic_generator function).
+
         """
         # no hints for this one :c
         return None
@@ -169,6 +192,7 @@ class PalletizingRobot:
             # self.robot.something()
             while True:
                 time.sleep(1)
+                
         self.robot.disconnect()
 
 if __name__ == "__main__":
@@ -177,3 +201,4 @@ if __name__ == "__main__":
     robot = PalletizingRobot(robot_ip)
     robot.initialize_camera()
     robot.run()
+
