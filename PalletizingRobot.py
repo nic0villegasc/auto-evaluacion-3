@@ -214,10 +214,10 @@ class PalletizingRobot:
             print("Successfully connected to robot")
             self.robot.set_servo_status(1)
 
+            self.scan_virtual_vars()
+            
             while True:
-                key = cv2.waitKey(1) & 0xFF
-                if key == ord('s'):
-                    self.scan_virtual_vars()
+                    
 
                 if self.object_detected:
                     self.pick_and_place()
