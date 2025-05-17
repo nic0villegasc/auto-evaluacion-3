@@ -157,6 +157,33 @@ class PalletizingRobot:
         piece and place it in the desired pallet position (given by the 
         mozaic_generator function).
         """
+        if not self.object_detected:
+            return
+    
+        print("[PICK_AND_PLACE] Moviendo solo en X")
+    
+        # Coordenadas fijas excepto X
+        fixed_y = 0         # posición fija en Y
+        fixed_z = -154.092       # altura segura para no tocar la cinta
+        rx, ry, rz = -0.584, -1.702, 91.0  # orientación fija
+
+        # Pose destino
+        pose = [self.target_x, self.target_y, fixed_z, rx, ry, rz]
+
+        # Mover robot a esa posición
+        if self.robot.get_inputIO():
+            self.robot.move_l_pose(np.array(pose))
+            self.robot.wait_until_motion_complete()
+        
+        
+
+
+
+        print(f"[PICK_AND_PLACE] Llegó a X = {self.target_x:.1f} mm")
+    
+        # Solo para esta prueba no hacemos nada más
+        self.object_detected = False
+
         # no hints for this one :c
         return None
    
