@@ -193,18 +193,6 @@ class PalletizingRobot:
         self.robot.wait_until_motion_complete()
 
         print(f"[PICK_AND_PLACE] Llegó a X = {self.target_x:.1f} mm")
-    
-    def scan_virtual_vars(self, inicio=528, fin=600):
-        print(f"\n[ESCANEO] Escaneando variables M desde {inicio} hasta {fin}...\n")
-        for i in range(inicio, fin):
-            try:
-                ret, val = self.robot.get_virtual_var(i)
-                if ret and val not in [0, None]:
-                    print(f"[ACTIVA] M{i} = {val}")
-            except Exception as e:
-                print(f"[ERROR] M{i} → {e}")
-        self.object_detected = False
-
    
     def run(self):
         thread = threading.Thread(target=self.camera_thread, daemon=True)
@@ -214,7 +202,10 @@ class PalletizingRobot:
             print("Successfully connected to robot")
             self.robot.set_servo_status(1)
 
-            self.scan_virtual_vars()
+            for i in range (0, 400 ,1):
+              # Set output IO status
+              result = self.send_cmd("getVirtualInput", {"addr": i})
+              print(f"Revisando variable ({i}): {result}")
             
             while True:
                     
