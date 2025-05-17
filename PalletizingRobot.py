@@ -116,16 +116,16 @@ class PalletizingRobot:
         c = 0.098 # tx
         f = -52.005764  # ty
         Xr = a*u+b
-        Yr = c 
+        Yr = -34.796 
         corde=[Xr,Yr]    # -0.2561*u + 0.3541*v -86.17
         # Print coordenadas objetivo en el sistema del robot
         self.target_x=Xr
         self.target_y=Yr
         self.object_detected=True
         print(f"[MAP] Robot → X={Xr:.1f} mm, Y={Yr:.1f} mm")
-        print("roberto come trabas")
-        print("caca")
-        self.robot.open_gripper()
+        
+        
+        
         # Dibujar en pantalla
     
          #draw over frame
