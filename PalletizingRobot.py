@@ -208,7 +208,7 @@ class PalletizingRobot:
             
             while True:
                 
-                result = self.robot.get_virtual_var(address=SENSOR_ADDRESS)
+                result = self.robot.send_cmd("getVirtualInput", {"addr": SENSOR_ADDRESS})
 
                 current_sensor_is_detecting = None # Reset for current iteration
 
