@@ -189,7 +189,7 @@ class PalletizingRobot:
         pose = [self.target_x, self.target_y, fixed_z, rx, ry, rz]
 
         # Mover robot a esa posición
-        self.robot.move_l_pose(np.array(pose))
+        self.robot.move_l_pose(np.array(pose), speed=20)
         self.robot.wait_until_motion_complete()
 
         print(f"[PICK_AND_PLACE] Llegó a X = {self.target_x:.1f} mm")
