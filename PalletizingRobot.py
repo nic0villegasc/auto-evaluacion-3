@@ -240,14 +240,14 @@ class PalletizingRobot:
                 if current_sensor_is_detecting is not None:
                     if current_sensor_is_detecting != previous_sensor_state_is_detecting:
                         if current_sensor_is_detecting is True:
-                            print("Sensor detectando")
-                        else:
                             print("Sensor no detectando")
+                        else:
+                            print("Sensor detectando")
+                            if self.object_detected:
+                              self.pick_and_place()
                         
                         previous_sensor_state_is_detecting = current_sensor_is_detecting
 
-                if self.object_detected:
-                    self.pick_and_place()
                 time.sleep(0.5)
         else:
             print("No se pudo conectar al robot")
