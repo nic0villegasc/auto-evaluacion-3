@@ -121,6 +121,7 @@ class PalletizingRobot:
         # Print coordenadas objetivo en el sistema del robot
         print(f"[MAP] Robot → X={Xr:.1f} mm, Y={Yr:.1f} mm")
         print("roberto come trabas")
+        print("caca")
         self.robot.open_gripper()
         # Dibujar en pantalla
     
