@@ -140,6 +140,8 @@ class PalletizingRobot:
         self.robot_y = None
         self.robot_angle = None
         
+        print("Check")
+        
 
     def mozaic_generator(self):
         """
