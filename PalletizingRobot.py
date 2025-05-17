@@ -182,8 +182,10 @@ class PalletizingRobot:
     
         # Coordenadas fijas excepto X
         fixed_y = 0         # posición fija en Y
-        fixed_z = -154.092       # altura segura para no tocar la cinta
+        fixed_z = -33       # altura segura para no tocar la cinta
         rx, ry, rz = -0.584, -1.702, 91.0  # orientación fija
+        z_subida=-150
+        y_caida=470
 
         # Pose destino
         pose = [self.target_x, self.target_y, fixed_z, rx, ry, rz]
@@ -191,6 +193,18 @@ class PalletizingRobot:
         # Mover robot a esa posición
         self.robot.move_l_pose(np.array(pose), speed=20, acc=20)
         self.robot.wait_until_motion_complete()
+        self.close_gripper()
+        #accion de levantar
+        levantar=[self.target_x, self.target_y, z_subida, rx, ry, rz]
+        self.robot.move_l_pose(np.array(levantar),speed=20, acc=20)
+        self.robot.wait_until_motion_complete()
+        #accion de caida
+        caida=[self.target_x, y_caida, z_subida, rx, ry, rz]
+        self.robot.move_l_pose(np.array(caida),speed=20, acc=20)
+        self.robot.wait_until_motion_complete()
+        self.robot.open_gripper()
+
+
 
         print(f"[PICK_AND_PLACE] Llegó a X = {self.target_x:.1f} mm")
    
