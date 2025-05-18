@@ -10,12 +10,14 @@ import math
 class PalletizingRobot:
         
     def __init__(self, robot_ip, gray_thresh = 100, area_thresh = 45000, 
-                 cam_min_lim = (0, 0), cam_max_lim = (640, 480)):
+                 cam_min_lim = (0, 0), cam_max_lim = (640, 480), step_mode=True):
         self.robot = ELITE(robot_ip)
         self.frame = None
         self.camera = None
         self.camera_available = False 
         self.helper = None 
+        
+        self.step_by_step_enabled = step_mode 
 
         self.piece_num = 0 
         self.object_detected = False
@@ -152,7 +154,11 @@ class PalletizingRobot:
           frame = cv2.drawContours(frame, [box], 0, (0, 255, 0), 2) 
           frame = cv2.circle(frame, center, 5, (255, 0, 0), 10)
           return frame, mask, center, angle, 1
-        
+    
+    def _wait_for_step_confirmation(self, step_message):
+        """ If step-by-step mode is enabled, prints a message and waits for Enter key. """
+        if self.step_by_step_enabled:
+            input(f"--- PAUSED: {step_message} --- Press Enter to continue...")
     
     def map_camara2robot(self, center_coords, detected_angle):
         """
@@ -226,90 +232,71 @@ class PalletizingRobot:
         print(f"  Mosaic for {zone_type}, Idx {piece_index_in_zone}: Col {col}, Row {row} -> X {target_x:.1f}, Y {target_y:.1f}, Z {target_z:.1f}, RzPlt {target_rz_on_pallet_deg:.1f}")
         return target_x, target_y, target_z, target_rz_on_pallet_deg
 
-    def _pick_from_conveyor(self, pick_x, pick_y, target_j6_deg):
-        """
-        Commands the robot to pick an object from (pick_x, pick_y) on the conveyor.
-        Uses self.target_j6_deg for final tool orientation via a joint move.
-        Uses class attributes for Z heights.
+    # Inside class PalletizingRobot:
 
-        Args:
-            pick_x (float): Target X coordinate for picking (center of object).
-            pick_y (float): Target Y coordinate for picking (center of object).
-
-        Returns:
-            bool: True if pick sequence is successful (commands sent), False otherwise.
-        """
-        print(f"Executing pick at X:{pick_x:.1f}, Y:{pick_y:.1f} (J6 target: {target_j6_deg:.1f} deg)")
+    def _pick_from_conveyor(self, pick_x, pick_y, target_j6_deg_for_pick): # Renamed last arg for clarity
+        """ Commands the robot to pick an object, with step-by-step confirmation. """
+        print(f"Executing pick at X:{pick_x:.1f}, Y:{pick_y:.1f} (J6 target: {target_j6_deg_for_pick:.1f} deg)")
 
         # 1. Move to an approach position (X, Y, LIFT_Z_COMMON)
-        #    Use a nominal Rz for this initial approach, as J6 will be set precisely next.
-        #    If your robot tends to "wind up" J6, a more neutral initial Rz might be better.
-        #    For simplicity, let's use a nominal Rz, e.g., 0 or an Rz close to the expected target.
-        #    The previously calculated `self.piece_angle + 180.0` can be used here.
-        initial_rz_deg = target_j6_deg # TODO: Check if value is correct
-
+        initial_rz_deg = target_j6_deg_for_pick # Using target J6 as nominal Rz for less travel
         approach_pose_cartesian = [pick_x, pick_y, self.LIFT_Z_COMMON,
                                    self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, initial_rz_deg]
-        print(f"  1. Moving to approach (Cartesian): {approach_pose_cartesian}")
+        
+        self._wait_for_step_confirmation(f"Moving to approach pick pose: {np.round(approach_pose_cartesian,1).tolist()}")
         success, _, _ = self.robot.move_l_pose(np.array(approach_pose_cartesian), speed=30, acc=30)
         if not success:
             print("  Error: Failed to move to Cartesian approach pose.")
             return False
         self.robot.wait_until_motion_complete()
 
-        # 2. Get current joint positions (robot is now at the X,Y,Z_lift, with initial orientation)
+        # 2. Get current joint positions
+        self._wait_for_step_confirmation("Getting current joint positions before J6 orient")
         success_joints, current_joints_deg, _ = self.robot.get_current_joints()
         if not success_joints:
             print("  Error: Failed to get current joint positions.")
             return False
-        print(f"  2. Current joints (deg): {np.round(current_joints_deg, 2).tolist()}")
+        print(f"  Current joints (deg): {np.round(current_joints_deg, 2).tolist()}")
 
-        # 3. Prepare target joint array for J6 orientation
-        target_joints_deg = np.array(current_joints_deg) # Make a copy
+        # 3. Prepare and execute J6 orientation
+        target_joints_deg_array = np.array(current_joints_deg)
+        target_joints_deg_array[5] = target_j6_deg_for_pick # J6 is index 5
         
-        # Normalize target_j6_deg to be within typical robot joint limits if necessary
-        # (e.g., -180 to 180 or -360 to 360, depending on robot's J6 range)
-        # Example: target_j6_deg = (target_j6_deg + 180) % 360 - 180
-        target_joints_deg[5] = target_j6_deg # Joint 6 is at index 5
-
-        print(f"  3. Orienting J6 to {target_j6_deg:.1f} deg. Target joints: {np.round(target_joints_deg,2).tolist()}")
-        success, _, _ = self.robot.move_j_joint(target_joints_deg, speed=20, acc=20) # Speed/acc for joint move
+        self._wait_for_step_confirmation(f"Orienting J6 to {target_j6_deg_for_pick:.1f} deg. Target joints: {np.round(target_joints_deg_array,2).tolist()}")
+        success, _, _ = self.robot.move_j_joint(target_joints_deg_array, speed=20, acc=20)
         if not success:
             print("  Error: Failed to orient Joint 6.")
             return False
         self.robot.wait_until_motion_complete()
-        # After this move, the TCP X,Y,Z might have slightly changed if J1-J5 weren't perfectly held by the kinematic solution.
-        # For precise downward motion, it's best to get the current TCP again.
 
-        # 4. Get current TCP pose after J6 orientation for precise linear downward move
-        success_tcp, tcp_after_j6_orientation, _ = self.robot.get_tool_pose_in_base_coords()
+        # 4. Get current TCP pose after J6 orientation
+        self._wait_for_step_confirmation("Getting TCP pose after J6 orientation")
+        success_tcp, tcp_after_j6_orient, _ = self.robot.get_tool_pose_in_base_coords()
         if not success_tcp:
             print("  Error: Failed to get TCP pose after J6 orientation.")
             return False
-        print(f"  4. TCP after J6 orient (deg): {np.round(tcp_after_j6_orientation,2).tolist()}")
+        print(f"  TCP after J6 orient (deg): {np.round(tcp_after_j6_orient,2).tolist()}")
         
         # 5. Move down to actual pick position (linearly)
-        #    Use the X, Y, Rx, Ry, Rz from tcp_after_j6_orientation, only change Z.
-        pick_pose_cartesian = [tcp_after_j6_orientation[0], tcp_after_j6_orientation[1], self.PICK_Z_CONVEYOR,
-                               tcp_after_j6_orientation[3], tcp_after_j6_orientation[4], tcp_after_j6_orientation[5]]
-        print(f"  5. Moving down to pick (Cartesian): {pick_pose_cartesian}")
-        success, _, _ = self.robot.move_l_pose(np.array(pick_pose_cartesian), speed=10, acc=10) # Slower for precision
+        pick_pose_cartesian_final = [tcp_after_j6_orient[0], tcp_after_j6_orient[1], self.PICK_Z_CONVEYOR,
+                                     tcp_after_j6_orient[3], tcp_after_j6_orient[4], tcp_after_j6_orient[5]]
+        self._wait_for_step_confirmation(f"Moving down to pick (Cartesian): {np.round(pick_pose_cartesian_final,1).tolist()}")
+        success, _, _ = self.robot.move_l_pose(np.array(pick_pose_cartesian_final), speed=10, acc=10)
         if not success:
             print("  Error: Failed to move to actual pick pose.")
             return False
         self.robot.wait_until_motion_complete()
 
         # 6. Close gripper
-        print("  6. Closing gripper.")
+        self._wait_for_step_confirmation("Closing gripper")
         self.robot.close_gripper()
         time.sleep(0.7)
 
         # 7. Lift the object (linearly)
-        #    Use the X, Y, Rx, Ry, Rz from the pick pose, only change Z.
-        lift_pose_cartesian = [tcp_after_j6_orientation[0], tcp_after_j6_orientation[1], self.LIFT_Z_COMMON,
-                               tcp_after_j6_orientation[3], tcp_after_j6_orientation[4], tcp_after_j6_orientation[5]]
-        print(f"  7. Lifting object (Cartesian): {lift_pose_cartesian}")
-        success, _, _ = self.robot.move_l_pose(np.array(lift_pose_cartesian), speed=20, acc=20)
+        lift_pose_cartesian_final = [tcp_after_j6_orient[0], tcp_after_j6_orient[1], self.LIFT_Z_COMMON,
+                                     tcp_after_j6_orient[3], tcp_after_j6_orient[4], tcp_after_j6_orient[5]]
+        self._wait_for_step_confirmation(f"Lifting object (Cartesian): {np.round(lift_pose_cartesian_final,1).tolist()}")
+        success, _, _ = self.robot.move_l_pose(np.array(lift_pose_cartesian_final), speed=20, acc=20)
         if not success:
             print("  Error: Failed to lift object.")
             return False
@@ -321,7 +308,7 @@ class PalletizingRobot:
     def _place_on_pallet(self, place_x, place_y, place_z_on_pallet, place_lift_z, place_rz_on_pallet_deg):
         """
         Commands the robot to perform the place sequence on the pallet.
-        Uses class attributes for fixed Rx, Ry orientations.
+        Includes step-by-step confirmation if enabled.
 
         Args:
             place_x (float): Target X coordinate for placing (robot mm).
@@ -338,7 +325,8 @@ class PalletizingRobot:
         # 1. Move to approach position (above the pallet spot)
         approach_place_pose = [place_x, place_y, place_lift_z,
                                self.FIXED_RX_DEG, self.FIXED_RY_DEG, place_rz_on_pallet_deg]
-        print(f"  1. Moving to approach place pose: {approach_place_pose}")
+        
+        self._wait_for_step_confirmation(f"Moving to approach place pose: {np.round(approach_place_pose,1).tolist()}")
         success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=30, acc=30)
         if not success:
             print("  Error: Failed to move to approach place pose.")
@@ -348,7 +336,8 @@ class PalletizingRobot:
         # 2. Move down to actual place position
         actual_place_pose = [place_x, place_y, place_z_on_pallet,
                              self.FIXED_RX_DEG, self.FIXED_RY_DEG, place_rz_on_pallet_deg]
-        print(f"  2. Moving to actual place pose: {actual_place_pose}")
+        
+        self._wait_for_step_confirmation(f"Moving to actual place pose: {np.round(actual_place_pose,1).tolist()}")
         success, _, _ = self.robot.move_l_pose(np.array(actual_place_pose), speed=20, acc=20)
         if not success:
             print("  Error: Failed to move to actual place pose.")
@@ -356,19 +345,17 @@ class PalletizingRobot:
         self.robot.wait_until_motion_complete()
 
         # 3. Open gripper
-        print("  3. Opening gripper.")
+        self._wait_for_step_confirmation("Opening gripper")
         self.robot.open_gripper()
         time.sleep(0.7) # Allow time for gripper to open
 
         # 4. Retreat from pallet (lift up)
         # Using the same approach_place_pose for retreat for simplicity
-        print(f"  4. Retreating from place pose: {approach_place_pose}")
+        self._wait_for_step_confirmation(f"Retreating from place pose: {np.round(approach_place_pose,1).tolist()}")
         success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=30, acc=30)
         if not success:
             print("  Error: Failed to retreat from place pose.")
-            # Object is placed, but retreat failed. This might not be a critical failure
-            # for the palletizing logic itself, but good to note.
-            return False # Or True depending on how strictly you define success for the place sequence
+            return False 
         self.robot.wait_until_motion_complete()
 
         print("  Place sequence successfully completed.")
@@ -397,86 +384,75 @@ class PalletizingRobot:
             return "unclassified"
     
     def pick_and_place(self):
+        self._wait_for_step_confirmation("Start of pick_and_place cycle")
         if not self.object_detected:
-            print("[PICK_AND_PLACE] No object detected to initiate cycle.")
-            return False # No action taken
+            print("[PICK_AND_PLACE] No object detected to pick and place.")
+            return False
 
-        # self.target_x, self.target_y are absolute mapped coords for pick
-        # self.target_j6_deg is the robot's J6 angle (degrees) for picking
-        
-        print(f"[PICK_AND_PLACE] Cycle Start: Obj at X={self.target_x:.1f}, Y={self.target_y:.1f}, PickJ6={self.target_j6_deg:.1f} (CamAngle={self.piece_angle:.1f})")
+        print(f"[PICK_AND_PLACE] Initiating pick for object at X={self.target_x:.1f}, Y={self.target_y:.1f} (J6 target: {self.target_j6_deg:.1f} deg)")
 
-        # 1. Execute Pick Sequence
-        # _pick_from_conveyor now expects pick_x, pick_y, and target_j6_deg as arguments.
-        pick_successful = self._pick_from_conveyor(self.target_x, 
-                                                 self.target_y, 
-                                                 self.target_j6_deg)
+        pick_successful = self._pick_from_conveyor(self.target_x, self.target_y, self.target_j6_deg)
 
         if not pick_successful:
-            print("[PICK_AND_PLACE] Pick operation failed. Aborting cycle.")
-            self.object_detected = False # Reset detection flag
-            return False # Indicate pick failure
+            print("[PICK_AND_PLACE] Pick operation failed. Aborting.")
+            self.object_detected = False
+            return False
+        
+        self._wait_for_step_confirmation("Pick successful. Proceeding to classify orientation.")
 
-        print("[PICK_AND_PLACE] Pick successful.")
-
-        # 2. Classify Piece Orientation for Palletizing
-        # _classify_piece_orientation uses self.piece_angle (raw camera angle)
-        zone_type = self._classify_piece_orientation() 
-
+        # 2. Classify Piece Orientation
+        zone_type = self._classify_piece_orientation()
+        print(f"[PICK_AND_PLACE] Classified as '{zone_type}'. Camera angle was {self.piece_angle:.1f}°")
+        
         if zone_type == "unclassified":
-            print(f"[PICK_AND_PLACE] Piece with camera angle {self.piece_angle:.1f}° unclassified. Cannot determine pallet zone.")
-            # TODO: Implement logic for unclassified pieces (e.g., move to a reject bin)
-            # For now, we consider the cycle incomplete for palletizing.
-            # The robot is currently holding the piece. You might want to call a specific "drop_rejected_piece" function.
-            print("  Action: Aborting placement. Piece is still held by gripper.")
-            # self.object_detected = False # If piece is handled (e.g. rejected)
+            self._wait_for_step_confirmation(f"Piece unclassified (angle: {self.piece_angle:.1f}°). Action: Abort placement.")
+            # TODO: Implement reject logic if needed
+            print("  Aborting placement. Piece is still held.")
             return False 
 
-        # 3. Get Piece Index for the Selected Zone
+        self._wait_for_step_confirmation(f"Orientation classified as '{zone_type}'. Proceeding to mosaic generator.")
+
+        # 3. Get Piece Index
         current_piece_index_in_zone = 0
         if zone_type == "0_deg_type":
             current_piece_index_in_zone = self.piece_count_zone_0_deg
         elif zone_type == "90_deg_type":
             current_piece_index_in_zone = self.piece_count_zone_90_deg
         
-        print(f"[PICK_AND_PLACE] Classified as '{zone_type}'. Piece index for this zone: {current_piece_index_in_zone}")
-
-        # 4. Generate Placement Pose from Mozaic Generator
+        # 4. Generate Placement Pose
         place_pose_details = self.mozaic_generator(zone_type, current_piece_index_in_zone)
 
-        if place_pose_details is None or place_pose_details[0] is None: 
-            print(f"[PICK_AND_PLACE] Failed to get placement location from mozaic_generator (Zone: {zone_type}, Index: {current_piece_index_in_zone}). Pallet might be full.")
-            # TODO: Handle situation where pallet is full. Robot is holding a piece.
-            print("  Action: Aborting placement. Piece is still held by gripper.")
+        if place_pose_details is None or place_pose_details[0] is None:
+            self._wait_for_step_confirmation(f"Mozaic generator failed (Zone: {zone_type}, Index: {current_piece_index_in_zone}). Pallet might be full. Action: Abort placement.")
+            print("  Aborting placement. Piece is still held.")
             return False
 
         place_x, place_y, place_z_on_pallet, place_rz_on_pallet_deg = place_pose_details
-        print(f"[PICK_AND_PLACE] Mosaic generated place pose: X={place_x:.1f}, Y={place_y:.1f}, Z={place_z_on_pallet:.1f}, PlaceRz={place_rz_on_pallet_deg:.1f}")
+        self._wait_for_step_confirmation(f"Mosaic generated place pose: {np.round(place_pose_details,1).tolist()}. Proceeding to place.")
 
-        # 5. Execute Place Sequence
-        place_successful = self._place_on_pallet(place_x, place_y, place_z_on_pallet, 
-                                                 self.LIFT_Z_COMMON, # Using common lift Z for approach/retreat
+        # 5. Execute Place Sequence (assuming _place_on_pallet will also have internal steps)
+        place_successful = self._place_on_pallet(place_x, place_y, place_z_on_pallet,
+                                                 self.LIFT_Z_COMMON,
                                                  place_rz_on_pallet_deg)
 
         if not place_successful:
             print("[PICK_AND_PLACE] Place operation failed.")
-            # TODO: Handle place failure. Robot might still be holding the piece, or it was dropped incorrectly.
-            return False 
-
-        print("[PICK_AND_PLACE] Place successful.")
+            # TODO: Handle place failure
+            return False
+        
+        self._wait_for_step_confirmation("Place successful. Proceeding to update counts.")
 
         # 6. Update Counts
         if zone_type == "0_deg_type":
             self.piece_count_zone_0_deg += 1
-            print(f"  Piece count for {zone_type} zone: {self.piece_count_zone_0_deg}")
         elif zone_type == "90_deg_type":
             self.piece_count_zone_90_deg += 1
-            print(f"  Piece count for {zone_type} zone: {self.piece_count_zone_90_deg}")
         
-        self.piece_num += 1 # Overall piece count
-        self.object_detected = False # Reset for the next detection cycle
-        print(f"[PICK_AND_PLACE] Cycle complete. Total pieces processed: {self.piece_num}")
-        return True # Indicate successful cycle
+        self.piece_num += 1
+        self.object_detected = False
+        print(f"[PICK_AND_PLACE] Cycle complete. Zone 0 count: {self.piece_count_zone_0_deg}, Zone 90 count: {self.piece_count_zone_90_deg}, Total: {self.piece_num}")
+        self._wait_for_step_confirmation("Counts updated. End of pick_and_place cycle.")
+        return True
    
     def run(self):
         """Main execution loop for the robot."""
@@ -562,9 +538,10 @@ if __name__ == "__main__":
     camera_roi_min = (50, 50)   
     camera_roi_max = (600, 400) 
 
-    robot_controller = PalletizingRobot(robot_ip, 
-                                        cam_min_lim=camera_roi_min, 
-                                        cam_max_lim=camera_roi_max)
+    robot_controller = PalletizingRobot(robot_ip,
+                                        cam_min_lim=camera_roi_min,
+                                        cam_max_lim=camera_roi_max,
+                                        step_mode=True) 
     
     print("Initializing camera...")
     robot_controller.initialize_camera()
