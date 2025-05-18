@@ -35,8 +35,8 @@ class PalletizingRobot:
         # Affine transformation coefficients for Y-coordinate
         # Y_robot = Y_MAPPING_SLOPE * y_cam_pixel + Y_MAPPING_INTERCEPT
         # TODO: Need to calibrate these values!
-        self.Y_MAPPING_SLOPE = 0.5  # Placeholder - CALIBRATE THIS: Y_MAPPING_SLOPE = (RobotY2 - RobotY1) / (v2 - v1)
-        self.Y_MAPPING_INTERCEPT = -100.0 # Placeholder - CALIBRATE THIS: Y_MAPPING_INTERCEPT = RobotY1 - Y_MAPPING_SLOPE * v1
+        self.Y_MAPPING_SLOPE = -171.2613636  # Placeholder - CALIBRATE THIS: Y_MAPPING_SLOPE = (RobotY2 - RobotY1) / (v2 - v1)
+        self.Y_MAPPING_INTERCEPT = -7.868 # Placeholder - CALIBRATE THIS: Y_MAPPING_INTERCEPT = RobotY1 - Y_MAPPING_SLOPE * v1
         
         self.PICK_Z_CONVEYOR = -33.0      # Actual Z height for picking from conveyor
         self.LIFT_Z_COMMON = -150.0       # Common Z height for approach, lift, and retreat
