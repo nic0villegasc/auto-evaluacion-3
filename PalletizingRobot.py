@@ -498,14 +498,8 @@ class PalletizingRobot:
                     if current_sensor_state_is_detecting is not None:
                         if current_sensor_state_is_detecting != previous_sensor_state_is_detecting:
                             if current_sensor_state_is_detecting is True:
-                                print("Sensor: Object detected at pick-up point.")
-                                # Wait a brief moment for camera to process and set self.object_detected
-                                time.sleep(0.1) # Small delay to allow camera thread to update flag
-                                if self.object_detected:
-                                    print("Camera has also detected an object. Initiating pick and place.")
-                                    self.pick_and_place()
-                                else:
-                                    print("Sensor detected object, but camera has not confirmed/mapped yet.")
+                                print("Camera has also detected an object. Initiating pick and place.")
+                                self.pick_and_place()
                             else: 
                                 print("Sensor: No object at pick-up point / object removed.")
                             
