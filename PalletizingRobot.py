@@ -354,30 +354,18 @@ class PalletizingRobot:
         target_z = self.BASE_Z_FOR_FIRST_LAYER - (current_z_layer_index * self.PHYSICAL_THICKNESS_MM)
         target_x, target_y, target_j6_on_pallet_deg = None, None, None
         
-        if current_z_layer_index % 2 == 0:
-            target_j6_on_pallet_deg = self.PALLET_PRIMARY_RZ_DEG
-            
-            target_y = base_center_y
-            
-            offset_val_x = (self.PHYSICAL_WIDTH_MM / 2.0) + (self.ITEM_GAP_MM / 2.0)
-            
-            if index_within_pair == 0:
-                target_x = base_center_x - offset_val_x
-            else:
-                target_x = base_center_x + offset_val_x
-            print(f"  Zone {zone_type}, Z-Layer {current_z_layer_index} (X-offset): Piece in pair {index_within_pair}, j6={target_j6_on_pallet_deg} deg")
 
+        target_j6_on_pallet_deg = self.PALLET_PRIMARY_RZ_DEG
+        
+        target_y = base_center_y
+        
+        offset_val_x = (self.PHYSICAL_WIDTH_MM / 2.0) + (self.ITEM_GAP_MM / 2.0)
+        
+        if index_within_pair == 0:
+            target_x = base_center_x - offset_val_x
         else:
-            target_j6_on_pallet_deg = self.PALLET_SECONDARY_RZ_DEG
-            
-            target_x = base_center_x
-            
-            offset_val_y = (self.PHYSICAL_WIDTH_MM / 2.0) + (self.ITEM_GAP_MM / 2.0)
-
-            if index_within_pair == 0:
-                target_y = base_center_y - offset_val_y 
-                target_y = base_center_y + offset_val_y
-            print(f"  Zone {zone_type}, Z-Layer {current_z_layer_index} (Y-offset): Piece in pair {index_within_pair}, j6={target_j6_on_pallet_deg} deg")
+            target_x = base_center_x + offset_val_x
+        print(f"  Zone {zone_type}, Z-Layer {current_z_layer_index} (X-offset): Piece in pair {index_within_pair}, j6={target_j6_on_pallet_deg} deg")
 
         
         if current_z_layer_index >= self.MAX_Z_LAYERS_PER_ZONE:
