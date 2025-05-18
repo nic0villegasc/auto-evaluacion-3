@@ -40,7 +40,7 @@ class PalletizingRobot:
         self.Y_MAPPING_INTERCEPT = -3
         
         self.ANG_MAPPING_SLOPE = 0.9294
-        self.ANG_MAPPING_INTERCEPT = 86
+        self.ANG_MAPPING_INTERCEPT = 90
         
         self.PICK_Z_CONVEYOR = -33.0      # Actual Z height for picking from conveyor
         self.LIFT_Z_COMMON = -150.0       # Common Z height for approach, lift, and retreat
