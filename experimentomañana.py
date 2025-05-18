@@ -207,6 +207,14 @@ class PalletizingRobot:
             x_vuelta = -35.709
             z_vuelta = -150.004
             x_pose = self.target_x - 16
+            success, joints, _ = self.robot.get_current_joints()
+            if not success:
+                print("[ERROR] No se pudieron obtener los valores de los joints.")
+                return
+            joints[5] = 80.768
+            self.robot.move_j_joint(joints, speed=10, acc=20)
+            self.robot.wait_until_motion_complete()
+            print("[INFO] Joint 6 movido a 80.768 grados.")
             # Pose destino
 
             pose = [x_pose, self.target_y, z_seguro, rx, ry, rz]
@@ -251,14 +259,7 @@ class PalletizingRobot:
             z_vuelta = -150.004
             x_pose = self.target_x - 16
             # Mueve solo el Joint 6 a 80.768°
-            success, joints, _ = self.robot.get_current_joints()
-            if not success:
-                print("[ERROR] No se pudieron obtener los valores de los joints.")
-                return
-            joints[5] = 80.768
-            self.robot.move_j_joint(joints, speed=10, acc=20)
-            self.robot.wait_until_motion_complete()
-            print("[INFO] Joint 6 movido a 80.768 grados.")
+            
 
             x_pose = self.target_x - 16
             y_pose = self.target_y
