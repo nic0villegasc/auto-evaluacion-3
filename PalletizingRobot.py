@@ -486,31 +486,12 @@ class PalletizingRobot:
 
         # 1. Move to approach position (above the pallet spot)
         approach_place_pose = [place_x, place_y, place_lift_z,
-                               current_pose_cartesian[3], current_pose_cartesian[4], current_pose_cartesian[5]]
+                               current_pose_cartesian[3], current_pose_cartesian[4], place_j6_on_pallet_deg]
         
         self._wait_for_step_confirmation(f"Moving to approach place pose: {np.round(approach_place_pose,1).tolist()}")
         success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=80, acc=50)
         if not success:
             print("  Error: Failed to move to approach place pose.")
-            return False
-        self.robot.wait_until_motion_complete()
-        
-        # 1.1 Get current joint positions
-        self._wait_for_step_confirmation("Getting current joint positions before J6 orient")
-        success_joints, current_joints_deg, _ = self.robot.get_current_joints()
-        if not success_joints:
-            print("  Error: Failed to get current joint positions.")
-            return False
-        print(f"  Current joints (deg): {np.round(current_joints_deg, 2).tolist()}")
-
-        # 1.2 Prepare and execute J6 orientation
-        target_joints_deg_array = np.array(current_joints_deg)
-        target_joints_deg_array[5] = place_j6_on_pallet_deg # J6 is index 5
-        
-        self._wait_for_step_confirmation(f"Orienting J6 to {place_j6_on_pallet_deg:.1f} deg. Target joints: {np.round(target_joints_deg_array,2).tolist()}")
-        success, _, _ = self.robot.move_j_joint(target_joints_deg_array, speed=40, acc=30)
-        if not success:
-            print("  Error: Failed to orient Joint 6.")
             return False
         self.robot.wait_until_motion_complete()
 
@@ -541,7 +522,7 @@ class PalletizingRobot:
         # 4. Retreat from pallet (lift up)
         # Using the same approach_place_pose for retreat for simplicity
         actual_place_pose = [place_x, place_y, place_lift_z,
-                             current_joints_deg[3], current_joints_deg[4], current_joints_deg[5]]
+                             current_pose_cartesian[3], current_pose_cartesian[4], current_pose_cartesian[5]]
         
         self._wait_for_step_confirmation(f"Retreating from place pose: {np.round(actual_place_pose,1).tolist()}")
         success, _, _ = self.robot.move_l_pose(np.array(actual_place_pose), speed=20, acc=20)
