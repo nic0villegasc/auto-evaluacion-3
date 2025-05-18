@@ -182,8 +182,8 @@ class PalletizingRobot:
         return None
     
     def pick_and_place(self):
-        if not self.object_detected:
-            return
+    if not self.object_detected:
+        return
 
     print("roberto come caca")
     print(f"[PICK_AND_PLACE] Ángulo detectado = {self.detected_angle:.1f}°")
@@ -195,24 +195,24 @@ class PalletizingRobot:
         # Coordenadas fijas excepto X
         fixed_y = 0         # posición fija en Y
         fixed_z = -33       # altura segura para no tocar la cinta
-        z_seguro=-170
+        z_seguro = -170
         rx, ry, rz = -0.584, -1.702, 91.0  # orientación fija
-        z_subida=-150
-        y_caida=470
-        y_vuelta=52.468
-        x_vuelta=-35.709
-        z_vuelta=-150.004
-        x_pose=self.target_x - 16
+        z_subida = -150
+        y_caida = 470
+        y_vuelta = 52.468
+        x_vuelta = -35.709
+        z_vuelta = -150.004
+        x_pose = self.target_x - 16
         # Pose destino
 
         pose = [x_pose, self.target_y, z_seguro, rx, ry, rz]
-        bajar=[x_pose, self.target_y, fixed_z, rx, ry, rz]
+        bajar = [x_pose, self.target_y, fixed_z, rx, ry, rz]
 
         self.robot.open_gripper()
         self.robot.wait_until_motion_complete()
         self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
         self.robot.wait_until_motion_complete()
-        
+
         #bajar
         #self.robot.move_l_pose(np.array(bajar), speed=10, acc=20)
         #self.robot.wait_until_motion_complete()
@@ -232,21 +232,20 @@ class PalletizingRobot:
         #vuelta=[x_vuelta, y_vuelta,z_vuelta, rx, ry, rz]
         #self.robot.move_l_pose(np.array(vuelta),speed=20, acc=20)
 
-        
     # CASO 90 GRADOS (vertical)
     elif 80 <= self.detected_angle <= 100 and self.detected_height > self.detected_width:
         print("[INFO] El bloque está orientado en 90 grados (vertical). Ejecutando flujo en Y.")
         # Coordenadas fijas excepto Y
         fixed_x = 0         # posición fija en X
         fixed_z = -33       # altura segura para no tocar la cinta
-        z_seguro=-170
+        z_seguro = -170
         rx, ry, rz = -0.584, -1.702, 91.0  # orientación fija
-        z_subida=-150
-        y_caida=470
-        y_vuelta=52.468
-        x_vuelta=-35.709
-        z_vuelta=-150.004
-        x_pose=self.target_x - 16
+        z_subida = -150
+        y_caida = 470
+        y_vuelta = 52.468
+        x_vuelta = -35.709
+        z_vuelta = -150.004
+        x_pose = self.target_x - 16
         # Mueve solo el Joint 6 a 80.768°
         success, joints, _ = self.robot.get_current_joints()
         if not success:
@@ -256,11 +255,6 @@ class PalletizingRobot:
         self.robot.move_j_joint(joints, speed=10, acc=20)
         self.robot.wait_until_motion_complete()
         print("[INFO] Joint 6 movido a 80.768 grados.")
-
-        fixed_z = -33
-        z_seguro = -170
-        rx, ry, rz = -0.584, -1.702, 91.0
-        z_subida = -150
 
         x_pose = self.target_x - 16
         y_pose = self.target_y
@@ -273,7 +267,7 @@ class PalletizingRobot:
         self.robot.wait_until_motion_complete()
         self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
         self.robot.wait_until_motion_complete()
-      
+
         #bajar
         #self.robot.move_l_pose(np.array(bajar), speed=10, acc=20)
         #self.robot.wait_until_motion_complete()
@@ -295,6 +289,7 @@ class PalletizingRobot:
     else:
         print("[INFO] El bloque NO cumple condiciones para 180° ni 90°. No se ejecuta movimiento.")
         return
+
 
     print(f"[PICK_AND_PLACE] Llegó a X = {self.target_x:.1f} mm")
    
