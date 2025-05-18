@@ -80,9 +80,9 @@ class PalletizingRobot:
         self.cam_min_lim = cam_min_lim
         self.cam_max_lim = cam_max_lim
         
-        self.NEW_OBJECT_X_DIFF_THRESHOLD = 10  # Min change in X (pixels) to be a new object
-        self.NEW_OBJECT_Y_DIFF_THRESHOLD = 10  # Min change in Y (pixels)
-        self.NEW_OBJECT_ANGLE_DIFF_THRESHOLD = 10  # Min change in angle (degrees)
+        self.NEW_OBJECT_X_DIFF_THRESHOLD = 30  # Min change in X (pixels) to be a new object
+        self.NEW_OBJECT_Y_DIFF_THRESHOLD = 30  # Min change in Y (pixels)
+        self.NEW_OBJECT_ANGLE_DIFF_THRESHOLD = 30  # Min change in angle (degrees)
         self.NEW_OBJECT_TIME_THRESHOLD_SEC = 1.0
         
         self.STANDARD_POSES = {
