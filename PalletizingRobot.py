@@ -88,7 +88,7 @@ class PalletizingRobot:
             "initial_neutral_conveyor": {
                 "coords": [0.0, 0.0, self.LIFT_Z_COMMON, self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, self.NOMINAL_RZ_DEG],
                 "description": "initial neutral pose above conveyor (X=0, Y=0)",
-                "speed": 40, 
+                "speed": 60, 
                 "acc": 30
             },
             # Add other poses like "safe_home", "reject_bin_approach", etc.
@@ -472,7 +472,7 @@ class PalletizingRobot:
                                current_pose_cartesian[3], current_pose_cartesian[4], current_pose_cartesian[5]]
         
         self._wait_for_step_confirmation(f"Moving to approach place pose: {np.round(approach_place_pose,1).tolist()}")
-        success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=40, acc=30)
+        success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=60, acc=30)
         if not success:
             print("  Error: Failed to move to approach place pose.")
             return False
@@ -635,7 +635,7 @@ class PalletizingRobot:
         # The "initial_neutral_conveyor" pose in STANDARD_POSES should handle gripper opening.
         success_return_to_neutral = self._move_robot_to_standard_pose(
             pose_name="initial_neutral_conveyor",
-            gripper_action_after_move="open"
+            gripper_action_after_move="open",
         )
 
         if not success_return_to_neutral:
