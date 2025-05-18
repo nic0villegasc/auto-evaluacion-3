@@ -219,7 +219,7 @@ class PalletizingRobot:
             x_pose = self.target_x - 16
             
 
-            pose = [x_pose, self.target_y, z_seguro, rx, ry, 80.76]
+            pose = [x_pose, self.target_y, z_seguro, rx, ry, rz]
             bajar = [x_pose, self.target_y, fixed_z, rx, ry, 80.768]
 
             self.robot.open_gripper()
