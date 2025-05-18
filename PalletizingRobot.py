@@ -164,7 +164,10 @@ class PalletizingRobot:
                     
                     time_since_last_queued = current_time_monotonic - self.time_last_object_queued
                     
-                    if properties_are_different and time_since_last_queued > self.NEW_OBJECT_TIME_THRESHOLD_SEC:
+                    if properties_are_different:
+                        is_new_distinct_object = True
+                    else:
+                      if time_since_last_queued > self.NEW_OBJECT_TIME_THRESHOLD_SEC:
                         is_new_distinct_object = True
                 
                 if is_new_distinct_object:
