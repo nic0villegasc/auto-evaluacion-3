@@ -243,7 +243,7 @@ class PalletizingRobot:
             levantar=[x_pose, self.target_y, z_subida, rx, ry, rz]
             self.robot.move_l_pose(np.array(levantar),speed=10, acc=20)
             self.robot.wait_until_motion_complete()
-            accion de caida
+            #accion de caida
             caida=[self.target_x, y_caida, z_subida, rx, ry, rz]
             self.robot.move_l_pose(np.array(caida),speed=10, acc=20)
             self.robot.wait_until_motion_complete()
@@ -291,7 +291,7 @@ class PalletizingRobot:
             levantar=[x_pose, self.target_y, z_subida, rx, ry, rz]
             self.robot.move_l_pose(np.array(levantar),speed=10, acc=20)
             self.robot.wait_until_motion_complete()
-            accion de caida
+            #accion de caida
             caida=[x_caida, self.target_y, z_subida, rx, ry, rz]
             self.robot.move_l_pose(np.array(caida),speed=10, acc=20)
             self.robot.wait_until_motion_complete()
