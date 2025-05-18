@@ -339,11 +339,11 @@ class PalletizingRobot:
         base_center_x, base_center_y = 0.0, 0.0
         
         if zone_type == "0_deg_type":
-            base_center_x = self.PALLET_ZONE_0_CENTER_X
-            base_center_y = self.PALLET_ZONE_0_CENTER_Y
+            base_center_x = self.PALLET_ZONE_0_BASE_X
+            base_center_y = self.PALLET_ZONE_0_BASE_Y
         elif zone_type == "90_deg_type":
-            base_center_x = self.PALLET_ZONE_90_CENTER_X
-            base_center_y = self.PALLET_ZONE_90_CENTER_Y
+            base_center_x = self.PALLET_ZONE_90_BASE_X
+            base_center_y = self.PALLET_ZONE_90_BASE_Y
         else:
             print(f"Error: Unknown zone_type '{zone_type}' in mozaic_generator.")
             return None, None, None, None
@@ -381,7 +381,7 @@ class PalletizingRobot:
 
         
         if current_z_layer_index >= self.MAX_Z_LAYERS_PER_ZONE:
-            print(f"Error: Pallet zone '{zone_type}' is full. Max Z-layers ({MAX_Z_LAYERS_PER_ZONE}) reached.")
+            print(f"Error: Pallet zone '{zone_type}' is full. Max Z-layers ({self.MAX_Z_LAYERS_PER_ZONE}) reached.")
             return None, None, None, None
         
         print(f"  Mosaic for Zone {zone_type}, Overall Idx {piece_index_in_zone}: ZLayer {current_z_layer_index}, Pair Idx {index_within_pair} -> X {target_x:.1f}, Y {target_y:.1f}, Z {target_z:.1f}, j6Plt {target_j6_on_pallet_deg:.1f}")
