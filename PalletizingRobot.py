@@ -422,7 +422,7 @@ class PalletizingRobot:
         pick_pose_cartesian_final = [tcp_after_j6_orient[0], tcp_after_j6_orient[1], self.PICK_Z_CONVEYOR,
                                      tcp_after_j6_orient[3], tcp_after_j6_orient[4], tcp_after_j6_orient[5]]
         self._wait_for_step_confirmation(f"Moving down to pick (Cartesian): {np.round(pick_pose_cartesian_final,1).tolist()}")
-        success, _, _ = self.robot.move_l_pose(np.array(pick_pose_cartesian_final), speed=10, acc=10)
+        success, _, _ = self.robot.move_l_pose(np.array(pick_pose_cartesian_final), speed=10, acc=60, dec=30)
         if not success: 
             print("  Error: Failed to move to actual pick pose.")
             return False
@@ -437,7 +437,7 @@ class PalletizingRobot:
         lift_pose_cartesian_final = [tcp_after_j6_orient[0], tcp_after_j6_orient[1], self.LIFT_Z_COMMON,
                                      tcp_after_j6_orient[3], tcp_after_j6_orient[4], tcp_after_j6_orient[5]]
         self._wait_for_step_confirmation(f"Lifting object (Cartesian): {np.round(lift_pose_cartesian_final,1).tolist()}")
-        success, _, _ = self.robot.move_l_pose(np.array(lift_pose_cartesian_final), speed=20, acc=20)
+        success, _, _ = self.robot.move_l_pose(np.array(lift_pose_cartesian_final), speed=20, acc=30, dec=60)
         if not success:
             print("  Error: Failed to lift object.")
             return False
