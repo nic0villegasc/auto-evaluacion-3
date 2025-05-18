@@ -80,7 +80,7 @@ class PalletizingRobot:
         
         self.STANDARD_POSES = {
             "initial_neutral_conveyor": {
-                "coords": [0.0, 0.0, self.LIFT_Z_COMMON, self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, 180],
+                "coords": [0.0, 0.0, self.LIFT_Z_COMMON, self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, 0],
                 "description": "initial neutral pose above conveyor (X=0, Y=0)",
                 "speed": 20, 
                 "acc": 20
