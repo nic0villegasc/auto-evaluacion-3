@@ -211,7 +211,7 @@ class PalletizingRobot:
       center_y = center[1] # y-coordinate of the center
       bottom_vertex_y = np.max(box[:, 1])
       vertical_distance_to_bottom = bottom_vertex_y - center_y
-      center[1] = vertical_distance_to_bottom
+      center = (center[0], vertical_distance_to_bottom)
       
       frame = cv2.drawContours(frame, [box], 0, (0, 255, 0), 2) 
       frame = cv2.circle(frame, center, 5, (255, 0, 0), 10)
