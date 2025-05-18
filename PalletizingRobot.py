@@ -514,9 +514,17 @@ class PalletizingRobot:
             return False
         self.robot.wait_until_motion_complete()
 
-        # 2. Move down to actual place position
+        # 2.1 Get TCP
+        self._wait_for_step_confirmation("Getting TCP pose before actual place")
+        success_tcp, current_pose_cartesian, _ = self.robot.get_tool_pose(user_coord=1, tool_num=2)
+        if not success_tcp:
+            print("  Error: Failed to get TCP pose before actual place.")
+            return False
+        print(f"  TCP pose before actual place: {np.round(current_pose_cartesian,2).tolist()}")
+        
+        # 2.2 Move down to actual place position
         actual_place_pose = [place_x, place_y, place_z_on_pallet,
-                             current_joints_deg[3], current_joints_deg[4], current_joints_deg[5]]
+                             current_pose_cartesian[3], current_pose_cartesian[4], current_pose_cartesian[5]]
         
         self._wait_for_step_confirmation(f"Moving to actual place pose: {np.round(actual_place_pose,1).tolist()}")
         success, _, _ = self.robot.move_l_pose(np.array(actual_place_pose), speed=20, acc=20)
