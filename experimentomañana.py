@@ -235,23 +235,23 @@ class PalletizingRobot:
             self.robot.wait_until_motion_complete()
             print("[INFO] Joint 6 movido a 80.768 grados.")
             #bajar
-            #self.robot.move_l_pose(np.array(bajar), speed=10, acc=20)
-            #self.robot.wait_until_motion_complete()
-            #self.robot.close_gripper()
-            #self.robot.wait_until_motion_complete()
+            self.robot.move_l_pose(np.array(bajar), speed=10, acc=20)
+            self.robot.wait_until_motion_complete()
+            self.robot.close_gripper()
+            self.robot.wait_until_motion_complete()
             #accion de levantar
-            #levantar=[x_pose, self.target_y, z_subida, rx, ry, rz]
-            #self.robot.move_l_pose(np.array(levantar),speed=10, acc=20)
-            #self.robot.wait_until_motion_complete()
-            #accion de caida
-            #caida=[self.target_x, y_caida, z_subida, rx, ry, rz]
-            #self.robot.move_l_pose(np.array(caida),speed=10, acc=20)
-            #self.robot.wait_until_motion_complete()
-            #self.robot.open_gripper()
+            levantar=[x_pose, self.target_y, z_subida, rx, ry, rz]
+            self.robot.move_l_pose(np.array(levantar),speed=10, acc=20)
+            self.robot.wait_until_motion_complete()
+            accion de caida
+            caida=[self.target_x, y_caida, z_subida, rx, ry, rz]
+            self.robot.move_l_pose(np.array(caida),speed=10, acc=20)
+            self.robot.wait_until_motion_complete()
+            self.robot.open_gripper()
             #regreso a posicion original
-            #self.robot.close_gripper()
-            #vuelta=[x_vuelta, y_vuelta,z_vuelta, rx, ry, rz]
-            #self.robot.move_l_pose(np.array(vuelta),speed=20, acc=20)
+            self.robot.close_gripper()
+            vuelta=[x_vuelta, y_vuelta,z_vuelta, rx, ry, rz]
+            self.robot.move_l_pose(np.array(vuelta),speed=20, acc=20)
 
         # CASO 90 GRADOS (vertical)
         elif self.detected_height < self.detected_width:
@@ -262,7 +262,7 @@ class PalletizingRobot:
             z_seguro = -170
             rx, ry, rz = -0.584, -1.702, 91.0  # orientación fija
             z_subida = -150
-            y_caida = 470
+            x_caida = -410
             y_vuelta = 52.468
             x_vuelta = -35.709
             z_vuelta = -150.004
@@ -283,23 +283,23 @@ class PalletizingRobot:
             self.robot.wait_until_motion_complete()
 
             #bajar
-            #self.robot.move_l_pose(np.array(bajar), speed=10, acc=20)
-            #self.robot.wait_until_motion_complete()
-            #self.robot.close_gripper()
-            #self.robot.wait_until_motion_complete()
+            self.robot.move_l_pose(np.array(bajar), speed=10, acc=20)
+            self.robot.wait_until_motion_complete()
+            self.robot.close_gripper()
+            self.robot.wait_until_motion_complete()
             #accion de levantar
-            #levantar=[x_pose, self.target_y, z_subida, rx, ry, rz]
-            #self.robot.move_l_pose(np.array(levantar),speed=10, acc=20)
-            #self.robot.wait_until_motion_complete()
-            #accion de caida
-            #caida=[self.target_x, y_caida, z_subida, rx, ry, rz]
-            #self.robot.move_l_pose(np.array(caida),speed=10, acc=20)
-            #self.robot.wait_until_motion_complete()
-            #self.robot.open_gripper()
+            levantar=[x_pose, self.target_y, z_subida, rx, ry, rz]
+            self.robot.move_l_pose(np.array(levantar),speed=10, acc=20)
+            self.robot.wait_until_motion_complete()
+            accion de caida
+            caida=[x_caida, self.target_y, z_subida, rx, ry, rz]
+            self.robot.move_l_pose(np.array(caida),speed=10, acc=20)
+            self.robot.wait_until_motion_complete()
+            self.robot.open_gripper()
             #regreso a posicion original
-            #self.robot.close_gripper()
-            #vuelta=[x_vuelta, y_vuelta,z_vuelta, rx, ry, rz]
-            #self.robot.move_l_pose(np.array(vuelta),speed=20, acc=20)
+            self.robot.close_gripper()
+            vuelta=[x_vuelta, y_vuelta,z_vuelta, rx, ry, rz]
+            self.robot.move_l_pose(np.array(vuelta),speed=20, acc=20)
         else:
             print("[INFO] El bloque NO cumple condiciones para 180° ni 90°. No se ejecuta movimiento.")
             return
