@@ -205,10 +205,14 @@ class PalletizingRobot:
         bajar=[x_pose, self.target_y, fixed_z, rx, ry, rz]
 
         # Mover robot a esa posición
-        joints = self.robot.get_actual_joints()
-        joints[5] = np.deg2rad(80.768)   
-        self.robot.move_j_joint(np.array(joints), speed=10, acc=20)
+        success, joints, _ = self.robot.get_current_joints()
+        if not success:
+            print("[ERROR] No se pudieron obtener los valores de los joints.")
+            return
+        joints[5] = 80.768  # Joint 6 (índice 5) a 80.768 grados
+        self.robot.move_j_joint(joints, speed=10, acc=20)
         self.robot.wait_until_motion_complete()
+        print("[INFO] Joint 6 movido a 80.768 grados.")
 
         self.robot.open_gripper()
         self.robot.wait_until_motion_complete()
