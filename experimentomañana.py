@@ -270,11 +270,11 @@ class PalletizingRobot:
             y_vuelta = 52.468
             x_vuelta = -35.709
             z_vuelta = -150.004
-            x_pose = self.target_x - 16
+            
             # Mueve solo el Joint 6 a 80.768°
             
 
-            x_pose = self.target_x - 16
+            x_pose = self.target_x - 14
             y_pose = self.target_y
 
             pose = [x_pose, y_pose, z_seguro, rx, ry, rz]
