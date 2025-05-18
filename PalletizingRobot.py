@@ -32,7 +32,7 @@ class PalletizingRobot:
         # Affine transformation coefficients for X-coordinate
         # X_robot = X_MAPPING_SLOPE * x_cam_pixel + X_MAPPING_INTERCEPT
         self.X_MAPPING_SLOPE = 0.5208
-        self.X_MAPPING_INTERCEPT = -132.57
+        self.X_MAPPING_INTERCEPT = -130
 
         # Affine transformation coefficients for Y-coordinate
         # Y_robot = Y_MAPPING_SLOPE * y_cam_pixel + Y_MAPPING_INTERCEPT
@@ -80,7 +80,7 @@ class PalletizingRobot:
         
         self.STANDARD_POSES = {
             "initial_neutral_conveyor": {
-                "coords": [0.0, 0.0, self.LIFT_Z_COMMON, self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, 0.0],
+                "coords": [0.0, 0.0, self.LIFT_Z_COMMON, self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, 180],
                 "description": "initial neutral pose above conveyor (X=0, Y=0)",
                 "speed": 20, 
                 "acc": 20
@@ -706,14 +706,8 @@ class PalletizingRobot:
 
 if __name__ == "__main__":
     robot_ip = "169.168.0.200" # Replace with your robot's IP
-    
-    # Define ROI for camera processing
-    camera_roi_min = (50, 50)   
-    camera_roi_max = (600, 400) 
 
     robot_controller = PalletizingRobot(robot_ip,
-                                        cam_min_lim=camera_roi_min,
-                                        cam_max_lim=camera_roi_max,
                                         step_mode=True) 
     
     print("Initializing camera...")
