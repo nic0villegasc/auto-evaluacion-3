@@ -169,11 +169,17 @@ class PalletizingRobot:
           angle += 90
           
       center = (int(center[0]) + self.cam_min_lim[0], int(center[1]) + self.cam_min_lim[1])
-  
+
       # draw over frame
       box = cv2.boxPoints(rect).astype(int)
       box[:, 0] =  box[:, 0] + self.cam_min_lim[0]
       box[:, 1] =  box[:, 1] + self.cam_min_lim[1]
+      
+      center_y = center[1] # y-coordinate of the center
+      bottom_vertex_y = np.max(box[:, 1])
+      vertical_distance_to_bottom = bottom_vertex_y - center_y
+      center[1] = vertical_distance_to_bottom
+      
       frame = cv2.drawContours(frame, [box], 0, (0, 255, 0), 2) 
       frame = cv2.circle(frame, center, 5, (255, 0, 0), 10)
       return frame, mask, center, angle, 1
