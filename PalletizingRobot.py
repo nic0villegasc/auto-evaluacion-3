@@ -76,7 +76,7 @@ class PalletizingRobot:
         self.PHYSICAL_WIDTH_MM = 95.0  # Physical shorter side of the piece (mm)
         self.PHYSICAL_HEIGHT_MM = 150.0 # Physical longer side of the piece (mm)
         self.PHYSICAL_THICKNESS_MM = 95.0
-        self.ITEM_GAP_MM = 5.0 # Gap between items on pallet
+        self.ITEM_GAP_MM = 30.0 # Gap between items on pallet
         
         self.BASE_Z_FOR_FIRST_LAYER = self.PLACE_Z_PALLET_SURFACE + self.PHYSICAL_THICKNESS_MM / 2.0
         
@@ -639,7 +639,7 @@ class PalletizingRobot:
             return False # Indicate failure
 
         place_x, place_y, place_z_on_pallet, place_j6_on_pallet_deg = place_pose_details
-        self._wait_for_step_confirmation(f"Mosaic generated. Target place pose: X={place_x:.1f}, Y={place_y:.1f}, Z={place_z_on_pallet:.1f}, Rz={place_rz_on_pallet_deg:.1f}. Proceeding to place.")
+        self._wait_for_step_confirmation(f"Mosaic generated. Target place pose: X={place_x:.1f}, Y={place_y:.1f}, Z={place_z_on_pallet:.1f}, j6={place_j6_on_pallet_deg:.1f}. Proceeding to place.")
 
         # 5. Execute Place Sequence
         # _place_on_pallet needs: place_x, place_y, place_z_on_pallet, place_lift_z (self.LIFT_Z_COMMON), place_rz_on_pallet_deg
