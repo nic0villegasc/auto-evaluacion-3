@@ -78,6 +78,15 @@ class PalletizingRobot:
         self.cam_min_lim = cam_min_lim
         self.cam_max_lim = cam_max_lim
         
+        self.NEW_OBJECT_X_DIFF_THRESHOLD = 75  # Min change in X (pixels) to be a new object
+        self.NEW_OBJECT_Y_DIFF_THRESHOLD = 50  # Min change in Y (pixels)
+        self.NEW_OBJECT_ANGLE_DIFF_THRESHOLD = 15  # Min change in angle (degrees)
+        
+        self.NEW_OBJECT_WIDTH_REL_DIFF_THRESHOLD = 0.3  # 30% relative diff in width
+        self.NEW_OBJECT_HEIGHT_REL_DIFF_THRESHOLD = 0.3 # 30% relative diff in height
+        self.MIN_WIDTH_FOR_REL_COMPARISON = 10 # Avoid division by zero or tiny widths
+        self.MIN_HEIGHT_FOR_REL_COMPARISON = 10
+        
         self.STANDARD_POSES = {
             "initial_neutral_conveyor": {
                 "coords": [0.0, 0.0, self.LIFT_Z_COMMON, self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, self.NOMINAL_RZ_DEG],
@@ -112,7 +121,7 @@ class PalletizingRobot:
             frame = self.camera.capture_array()[:, :, 0:3]
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             frame = self.helper.correct_image(frame)
-            frame, mask, center, angle, success = self.detect_box(frame, self.gray_thresh,
+            frame, mask, center, angle, width, height, success = self.detect_box(frame, self.gray_thresh,
                                                                   self.area_thresh, iter_ = 1)
             frame = cv2.rectangle(frame, self.cam_min_lim, self.cam_max_lim, (0, 0, 255), 2)
             
@@ -123,7 +132,31 @@ class PalletizingRobot:
             cv2.imshow("Robot Camera mask", mask)
             
             if success:
-                self.map_camara2robot(center, angle)
+                current_props = {
+                    'center_x': center[0],
+                    'center_y': center[1],
+                    'angle': angle,
+                    'width': width,
+                    'height': height
+                }
+                is_new_distinct_object = False
+                
+                if self.last_queued_object_props is None:
+                  is_new_distinct_object = True
+                else:
+                  last_props = self.last_queued_object_props
+                  # --- Positional Difference ---
+                  # Primarily, a significant change in X for conveyor belts
+                  delta_x = abs(current_props['center_x'] - last_props['center_x'])
+                  delta_y = abs(current_props['center_y'] - last_props['center_y']) # Optional stricter check
+
+                  if delta_x > self.NEW_OBJECT_X_DIFF_THRESHOLD or delta_y > self.NEW_OBJECT_Y_DIFF_THRESHOLD:
+                    is_new_distinct_object = True
+                
+                if is_new_distinct_object:
+                    print(f"[CAMERA_THREAD] New distinct object identified. Properties: {current_props}")
+                    self.map_camara2robot(center, angle)
+                    self.last_queued_object_props = current_props
             
             if cv2.waitKey(1) & 0xFF == ord('q'):
               break
@@ -182,7 +215,7 @@ class PalletizingRobot:
       
       frame = cv2.drawContours(frame, [box], 0, (0, 255, 0), 2) 
       frame = cv2.circle(frame, center, 5, (255, 0, 0), 10)
-      return frame, mask, center, angle, 1
+      return frame, mask, center, angle, width, height, 1
     
     def _wait_for_step_confirmation(self, step_message):
         """ If step-by-step mode is enabled, prints a message and waits for Enter key. """
