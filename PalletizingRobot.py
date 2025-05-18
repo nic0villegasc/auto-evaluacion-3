@@ -157,8 +157,8 @@ class PalletizingRobot:
                     
 
                     # --- Check if properties are different ---
-                    if (delta_x > self.NEW_OBJECT_X_DIFF_THRESHOLD or
-                        delta_y > self.NEW_OBJECT_Y_DIFF_THRESHOLD or
+                    if (delta_x > self.NEW_OBJECT_X_DIFF_THRESHOLD and
+                        delta_y > self.NEW_OBJECT_Y_DIFF_THRESHOLD and
                         sym_angle_diff > self.NEW_OBJECT_ANGLE_DIFF_THRESHOLD):
                         properties_are_different = True
                     
