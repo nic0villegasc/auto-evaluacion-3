@@ -149,9 +149,14 @@ class PalletizingRobot:
                   # --- Positional Difference ---
                   # Primarily, a significant change in X for conveyor belts
                   delta_x = abs(current_props['center_x'] - last_props['center_x'])
-                  delta_y = abs(current_props['center_y'] - last_props['center_y']) # Optional stricter check
+                  delta_y = abs(current_props['center_y'] - last_props['center_y'])
+                  
+                  abs_angle_diff = abs(current_props['angle'] - last_props['angle'])
+                  sym_angle_diff = min(abs_angle_diff, 180.0 - abs_angle_diff)
 
-                  if delta_x > self.NEW_OBJECT_X_DIFF_THRESHOLD or delta_y > self.NEW_OBJECT_Y_DIFF_THRESHOLD:
+                  if (delta_x > self.NEW_OBJECT_X_DIFF_THRESHOLD or
+                        delta_y > self.NEW_OBJECT_Y_DIFF_THRESHOLD or
+                        sym_angle_diff > self.NEW_OBJECT_ANGLE_DIFF_THRESHOLD):
                     is_new_distinct_object = True
                 
                 if is_new_distinct_object:
