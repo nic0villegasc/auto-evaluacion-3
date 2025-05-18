@@ -43,9 +43,9 @@ class PalletizingRobot:
     def initialize_camera(self):
         """Initializes the camera and performs calibration."""
         self.helper = CameraCalibrationHelper()
-        self.camera = self.helper.initialize_raspicam(headless = True, sensor_index = -1) # Assuming sensor_index -1 is valid
+        self.camera = self.helper.initialize_raspicam(headless = True, sensor_index = -1)
         self.helper.calibrate_raspberry()
-        time.sleep(1) # Wait for camera to stabilize
+        time.sleep(1)
         self.camera_available = True
         print("Camera initialized and calibrated.")
     
@@ -61,18 +61,12 @@ class PalletizingRobot:
         while True:
             frame = self.camera.capture_array()[:, :, 0:3]
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-            if self.helper:
-                 frame = self.helper.correct_image(frame)
-
-            detection_frame = frame.copy()
-            processed_frame, mask, center, angle, success = self.detect_box(detection_frame, 
-                                                                            self.gray_thresh,
-                                                                            self.area_thresh, iter_ = 1)
-            
-            display_frame = cv2.rectangle(frame, self.cam_min_lim, self.cam_max_lim, (0, 0, 0), 2)
-            cv2.imshow("Robot Camera", display_frame)
-            if mask is not None:
-                cv2.imshow("Robot Camera mask", mask)
+            frame = self.helper.correct_image(frame)
+            frame, mask, center, angle, success = self.detect_box(frame, self.gray_thresh,
+                                                                  self.area_thresh, iter_ = 1)
+            frame = cv2.rectangle(frame, self.cam_min_lim, self.cam_max_lim, (0, 0, 0), 10)
+            cv2.imshow("Robot Camera", frame)
+            cv2.imshow("Robot Camera mask", mask)
             
             if success:
                 self.map_camara2robot(center, angle)
@@ -80,69 +74,57 @@ class PalletizingRobot:
                 self.object_detected = False 
             
             if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-        
-        cv2.destroyAllWindows()
-        if self.camera:
-            self.camera.stop()
+              break
 
-    def detect_box(self, frame, gray_thresh, area_thresh, iter_ = 1):
-        """
-        The angle of the wood piece is in the range of (-90, 90) in degreesm
-        so that the conversion to the robot's Rz is easy.
+        def detect_box(self, frame, gray_thresh, area_thresh, iter_ = 1):
+          """
+          The angle of the wood piece is in the range of (-90, 90) in degreesm
+          so that the conversion to the robot's Rz is easy.
 
-        the iter_ parameter could be changed in case of very noisy environments,
-        but it is not recommended to change it too much as it will distort the 
-        calculation of the center of mass.        
-        """
-        aux = frame[self.cam_min_lim[1]:self.cam_max_lim[1],
-                    self.cam_min_lim[0]:self.cam_max_lim[0]]
-        
-        if aux.size == 0: 
-            return frame, None, None, None, False
-
-        gray_image = cv2.cvtColor(aux, cv2.COLOR_BGR2GRAY)
-        _, mask = cv2.threshold(gray_image, gray_thresh, 255, cv2.THRESH_BINARY)
-        
-        kernel = np.ones((5,5),np.uint8) 
-        mask = cv2.erode(mask, kernel, iterations=iter_)
-        mask = cv2.dilate(mask, kernel, iterations=iter_)
-        
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        
-        if not contours:
-            return frame, mask, None, None, False
-        
-        largest_contour = max(contours, key=cv2.contourArea)
-        area = cv2.contourArea(largest_contour)
-
-        if area < area_thresh:
-            return frame, mask, None, None, False
-        
-        rect = cv2.minAreaRect(largest_contour)
-        center_roi, (width_pixels, height_pixels), angle_rect = rect
-        
-        # Adjust angle convention from minAreaRect if necessary
-        if width_pixels < height_pixels: # Assuming angle is of the longer side
-            angle_rect += 90
-        
-        # Normalize angle (example: to -90 to +90)
-        if angle_rect > 90:
-             angle_rect -= 180
-        elif angle_rect < -90:
-             angle_rect += 180
-
-        center_full_frame = (int(center_roi[0] + self.cam_min_lim[0]), 
-                             int(center_roi[1] + self.cam_min_lim[1]))
-    
-        box_points_roi = cv2.boxPoints(rect)
-        box_points_full_frame = box_points_roi + np.array([self.cam_min_lim[0], self.cam_min_lim[1]])
-        box_points_full_frame = np.int0(box_points_full_frame)
-        
-        cv2.drawContours(frame, [box_points_full_frame], 0, (0, 255, 0), 2) 
-        cv2.circle(frame, center_full_frame, 5, (255, 0, 0), -1)
-        
-        return frame, mask, center_full_frame, angle_rect, True
+          the iter_ parameter could be changed in case of very noisy environments,
+          but it is not recommended to change it too much as it will distort the 
+          calculation of the center of mass.        
+          """
+          aux = frame[self.cam_min_lim[1]:self.cam_max_lim[1],
+                      self.cam_min_lim[0]:self.cam_max_lim[0]]
+          
+          # Grayscale detection
+          gray_image = cv2.cvtColor(aux, cv2.COLOR_BGR2GRAY)
+          
+          # mask thresh
+          _, mask = cv2.threshold(gray_image, gray_thresh, 255, cv2.THRESH_BINARY)
+          mask = cv2.erode(mask, None, iterations=iter_)
+          mask = cv2.dilate(mask, None, iterations=iter_)
+          
+          # find contour with largest area
+          contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+          
+          # Check if there is contour:
+          if not contours:
+              return frame, mask, None, None, 0
+          
+          # check if area is over the min threshold
+          largest_contour = max(contours, key=cv2.contourArea)
+          area = cv2.contourArea(largest_contour)
+          if area < area_thresh:
+              return frame, mask, None, None, 0
+          
+          # Detect square position and orientation 
+          rect = cv2.minAreaRect(largest_contour)
+          center, (width, height), angle = rect
+          
+          if width < height:
+              angle += 90
+              
+          center = (int(center[0]) + self.cam_min_lim[0], int(center[1]) + self.cam_min_lim[1])
+      
+          # draw over frame
+          box = cv2.boxPoints(rect).astype(int)
+          box[:, 0] =  box[:, 0] + self.cam_min_lim[0]
+          box[:, 1] =  box[:, 1] + self.cam_min_lim[1]
+          frame = cv2.drawContours(frame, [box], 0, (0, 255, 0), 2) 
+          frame = cv2.circle(frame, center, 5, (255, 0, 0), 10)
+          return frame, mask, center, angle, 1
         
     
     def map_camara2robot(self, center_coords, detected_angle):
@@ -161,12 +143,12 @@ class PalletizingRobot:
         # Calculate robot's target X 
         Xr = self.X_MAPPING_SLOPE * u_cam_px + self.X_MAPPING_INTERCEPT
         
-        # Calculate robot's target Y (dynamically)
+        # Calculate robot's target Y
         Yr = self.Y_MAPPING_SLOPE * v_cam_px + self.Y_MAPPING_INTERCEPT
 
         self.target_x = Xr
-        self.target_y = Yr # Now dynamically calculated
-        self.piece_angle = detected_angle # Store for potential Rz calculation
+        self.target_y = Yr
+        self.piece_angle = detected_angle
         self.object_detected = True
         
         print(f"[MAP] CamInput: u={u_cam_px}, v={v_cam_px}")
@@ -174,6 +156,13 @@ class PalletizingRobot:
         
 
     def mozaic_generator(self):
+        """
+        TODO:
+        [INCOMPLETE FUNCTION]: It should generate the position of where the
+        piece will be placed in the pallet.
+        """
+        # hint: do it with self.piece_num
+        
         print("Mosaic generator called - currently a placeholder.")
         return None 
     
