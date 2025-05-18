@@ -23,7 +23,8 @@ class PalletizingRobot:
         self.piece_num = 0 
         self.object_detected = False
         self.object_queue = queue.Queue(maxsize=max_queue_size)
-        self.last_queued_object_props = None 
+        self.last_queued_object_props = None
+        self.time_last_object_queued = 0.0
         
         self.target_x = 0.0 
         self.target_y = 0.0 
@@ -79,14 +80,10 @@ class PalletizingRobot:
         self.cam_min_lim = cam_min_lim
         self.cam_max_lim = cam_max_lim
         
-        self.NEW_OBJECT_X_DIFF_THRESHOLD = 75  # Min change in X (pixels) to be a new object
-        self.NEW_OBJECT_Y_DIFF_THRESHOLD = 50  # Min change in Y (pixels)
-        self.NEW_OBJECT_ANGLE_DIFF_THRESHOLD = 15  # Min change in angle (degrees)
-        
-        self.NEW_OBJECT_WIDTH_REL_DIFF_THRESHOLD = 0.3  # 30% relative diff in width
-        self.NEW_OBJECT_HEIGHT_REL_DIFF_THRESHOLD = 0.3 # 30% relative diff in height
-        self.MIN_WIDTH_FOR_REL_COMPARISON = 10 # Avoid division by zero or tiny widths
-        self.MIN_HEIGHT_FOR_REL_COMPARISON = 10
+        self.NEW_OBJECT_X_DIFF_THRESHOLD = 10  # Min change in X (pixels) to be a new object
+        self.NEW_OBJECT_Y_DIFF_THRESHOLD = 10  # Min change in Y (pixels)
+        self.NEW_OBJECT_ANGLE_DIFF_THRESHOLD = 10  # Min change in angle (degrees)
+        self.NEW_OBJECT_TIME_THRESHOLD_SEC = 1.0
         
         self.STANDARD_POSES = {
             "initial_neutral_conveyor": {
@@ -119,6 +116,8 @@ class PalletizingRobot:
             return
 
         while True:
+            current_time_monotonic = time.monotonic()
+          
             frame = self.camera.capture_array()[:, :, 0:3]
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             frame = self.helper.correct_image(frame)
@@ -143,26 +142,41 @@ class PalletizingRobot:
                 is_new_distinct_object = False
                 
                 if self.last_queued_object_props is None:
-                  is_new_distinct_object = True
+                    is_new_distinct_object = True
                 else:
-                  last_props = self.last_queued_object_props
-                  # --- Positional Difference ---
-                  # Primarily, a significant change in X for conveyor belts
-                  delta_x = abs(current_props['center_x'] - last_props['center_x'])
-                  delta_y = abs(current_props['center_y'] - last_props['center_y'])
-                  
-                  abs_angle_diff = abs(current_props['angle'] - last_props['angle'])
-                  sym_angle_diff = min(abs_angle_diff, 180.0 - abs_angle_diff)
+                    last_props = self.last_queued_object_props
+                    properties_are_different = False
 
-                  if (delta_x > self.NEW_OBJECT_X_DIFF_THRESHOLD or
+                    # --- Positional Difference ---
+                    delta_x = abs(current_props['center_x'] - last_props['center_x'])
+                    delta_y = abs(current_props['center_y'] - last_props['center_y'])
+                    
+                    # --- Angle Difference (with wrapping/180-degree symmetry) ---
+                    abs_angle_diff = abs(current_props['angle'] - last_props['angle'])
+                    sym_angle_diff = min(abs_angle_diff, 180.0 - abs_angle_diff)
+                    
+
+                    # --- Check if properties are different ---
+                    if (delta_x > self.NEW_OBJECT_X_DIFF_THRESHOLD or
                         delta_y > self.NEW_OBJECT_Y_DIFF_THRESHOLD or
                         sym_angle_diff > self.NEW_OBJECT_ANGLE_DIFF_THRESHOLD):
-                    is_new_distinct_object = True
+                        properties_are_different = True
+                    
+                    if properties_are_different:
+                        is_new_distinct_object = True
+                    else:
+                        time_since_last_queued = current_time_monotonic - self.time_last_object_queued
+                        if time_since_last_queued > self.NEW_OBJECT_TIME_THRESHOLD_SEC:
+                            print(f"[CAMERA_THREAD] Similar object, but time threshold ({self.NEW_OBJECT_TIME_THRESHOLD_SEC}s) exceeded "
+                                  f"({time_since_last_queued:.2f}s). Considering new.")
+                            is_new_distinct_object = True
                 
                 if is_new_distinct_object:
-                    print(f"[CAMERA_THREAD] New distinct object identified. Properties: {current_props}")
-                    self.map_camara2robot(center, angle)
+                    print(f"[CAMERA_THREAD] New distinct object identified. Props: {current_props}, Last: {self.last_queued_object_props}, Time: {current_time_monotonic:.2f}")
+                    self.map_camara2robot(center, angle) 
                     self.last_queued_object_props = current_props
+                    self.time_last_object_queued = current_time_monotonic
+                    
             
             if cv2.waitKey(1) & 0xFF == ord('q'):
               break
