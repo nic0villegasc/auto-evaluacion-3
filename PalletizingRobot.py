@@ -23,6 +23,7 @@ class PalletizingRobot:
         self.target_x = 0.0 
         self.target_y = 0.0 
         self.piece_angle = 0.0
+        self.target_j6_rad = 0.0
 
         # Affine transformation coefficients for X-coordinate
         # X_robot = X_MAPPING_SLOPE * x_cam_pixel + X_MAPPING_INTERCEPT
@@ -149,11 +150,13 @@ class PalletizingRobot:
         self.target_x = Xr
         self.target_y = Yr
         self.piece_angle = detected_angle
+        target_j6_deg = self.piece_angle + 180.0
+        self.target_j6_rad = math.radians(target_j6_deg)
+        
         self.object_detected = True
         
         print(f"[MAP] CamInput: u={u_cam_px}, v={v_cam_px}")
-        print(f"[MAP] Robot Target → X={self.target_x:.1f} mm, Y={self.target_y:.1f} mm, Angle (from camera): {self.piece_angle:.1f}°")
-        
+        print(f"[MAP] Robot Target → X={self.target_x:.1f} mm, Y={self.target_y:.1f} mm, Angle (cam): {self.piece_angle:.1f}°, Target Rz (rob): {target_j6_deg:.1f}° ({self.target_j6_rad:.3f} rad)")
 
     def mozaic_generator(self):
         """
