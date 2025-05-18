@@ -80,8 +80,8 @@ class PalletizingRobot:
         
         self.BASE_Z_FOR_FIRST_LAYER = self.PLACE_Z_PALLET_SURFACE - self.PHYSICAL_THICKNESS_MM / 2.0
         
-        self.PALLET_PRIMARY_RZ_DEG = 0.0
-        self.PALLET_SECONDARY_RZ_DEG = 90.0
+        self.PALLET_PRIMARY_RZ_DEG = 90.0
+        self.PALLET_SECONDARY_RZ_DEG = 0.0
 
         self.gray_thresh = gray_thresh
         self.area_thresh = area_thresh
@@ -516,7 +516,7 @@ class PalletizingRobot:
 
         # 2. Move down to actual place position
         actual_place_pose = [place_x, place_y, place_z_on_pallet,
-                             current_pose_cartesian[3], current_pose_cartesian[4], current_pose_cartesian[5]]
+                             current_joints_deg[3], current_joints_deg[4], current_joints_deg[5]]
         
         self._wait_for_step_confirmation(f"Moving to actual place pose: {np.round(actual_place_pose,1).tolist()}")
         success, _, _ = self.robot.move_l_pose(np.array(actual_place_pose), speed=20, acc=20)
@@ -532,8 +532,11 @@ class PalletizingRobot:
 
         # 4. Retreat from pallet (lift up)
         # Using the same approach_place_pose for retreat for simplicity
-        self._wait_for_step_confirmation(f"Retreating from place pose: {np.round(approach_place_pose,1).tolist()}")
-        success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=20, acc=20)
+        actual_place_pose = [place_x, place_y, place_lift_z,
+                             current_joints_deg[3], current_joints_deg[4], current_joints_deg[5]]
+        
+        self._wait_for_step_confirmation(f"Retreating from place pose: {np.round(actual_place_pose,1).tolist()}")
+        success, _, _ = self.robot.move_l_pose(np.array(actual_place_pose), speed=20, acc=20)
         if not success:
             print("  Error: Failed to retreat from place pose.")
             return False 
