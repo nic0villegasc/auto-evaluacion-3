@@ -72,7 +72,7 @@ class PalletizingRobot:
         # Mosaic parameters (dimensions in mm)
         self.ITEMS_PER_ROW = 2
         self.ITEMS_PER_Z_LAYER_PATTERN = 2
-        self.MAX_Z_LAYERS_PER_ZONE = 2 
+        self.MAX_Z_LAYERS_PER_ZONE = 3
         self.PHYSICAL_WIDTH_MM = 95.0  # Physical shorter side of the piece (mm)
         self.PHYSICAL_HEIGHT_MM = 150.0 # Physical longer side of the piece (mm)
         self.PHYSICAL_THICKNESS_MM = 95.0
