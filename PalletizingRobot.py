@@ -58,13 +58,13 @@ class PalletizingRobot:
         self.piece_count_zone_90_deg = 0
 
         # Base ROBOT CARTESIAN coordinates for palletizing zones (mm and degrees)
-        self.PALLET_ZONE_0_BASE_X = 300.0  # Robot X for corner/start of zone 0
-        self.PALLET_ZONE_0_BASE_Y = -200.0 # Robot Y for corner/start of zone 0
-        self.PALLET_ZONE_0_PLACE_RZ_DEG = 0.0 # Desired Robot Rz on pallet for 0-deg type pieces
+        self.PALLET_ZONE_0_BASE_X = -410  # Robot X for corner/start of zone 0
+        self.PALLET_ZONE_0_BASE_Y = 0.0 # Robot Y for corner/start of zone 0
+        self.PALLET_ZONE_0_PLACE_RZ_DEG = 180
 
-        self.PALLET_ZONE_90_BASE_X = 300.0  # Robot X for corner/start of zone 90
-        self.PALLET_ZONE_90_BASE_Y = 200.0  # Robot Y for corner/start of zone 90
-        self.PALLET_ZONE_90_PLACE_RZ_DEG = 90.0 # Desired Robot Rz on pallet for 90-deg type pieces
+        self.PALLET_ZONE_90_BASE_X = 0.0  # Robot X for corner/start of zone 90
+        self.PALLET_ZONE_90_BASE_Y = 400.0  # Robot Y for corner/start of zone 90
+        self.PALLET_ZONE_90_PLACE_RZ_DEG = 180
 
         # Mosaic parameters (dimensions in mm)
         self.ITEMS_PER_ROW = 3 # Example: 3 items per row on pallet
@@ -77,6 +77,16 @@ class PalletizingRobot:
         self.area_thresh = area_thresh
         self.cam_min_lim = cam_min_lim
         self.cam_max_lim = cam_max_lim
+        
+        self.STANDARD_POSES = {
+            "initial_neutral_conveyor": {
+                "coords": [0.0, 0.0, self.LIFT_Z_COMMON, self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, 0.0],
+                "description": "initial neutral pose above conveyor (X=0, Y=0)",
+                "speed": 20, 
+                "acc": 20
+            },
+            # Add other poses like "safe_home", "reject_bin_approach", etc.
+        }
         
         self._stop_event = threading.Event()
         
@@ -220,6 +230,38 @@ class PalletizingRobot:
         print(f"[MAP] CamInput: u={u_cam_px}, v={v_cam_px}")
         print(f"[MAP] Robot Target → X={self.target_x:.1f} mm, Y={self.target_y:.1f} mm, Angle (cam): {self.piece_angle:.1f}°, Target j6 (rob): {self.target_j6_deg:.1f}°")
 
+    def _move_robot_to_standard_pose(self, pose_name, gripper_action_after_move=None):
+        if pose_name not in self.STANDARD_POSES:
+            print(f"[ROBOT_MOVE] ERROR: Standard pose '{pose_name}' not defined.")
+            return False
+
+        pose_data = self.STANDARD_POSES[pose_name]
+        target_pose_coords = np.array(pose_data["coords"])
+        description = pose_data["description"]
+        speed = pose_data.get("speed", 30) # Default speed if not in dict
+        acc = pose_data.get("acc", 30)   # Default acc if not in dict
+
+        self._wait_for_step_confirmation(f"Moving to {description}: {np.round(target_pose_coords,1).tolist()}")
+        print(f"[ROBOT_MOVE] Moving to {description}: {np.round(target_pose_coords,1).tolist()}")
+
+        success_move, _, _ = self.robot.move_l_pose(target_pose_coords, speed=speed, acc=acc)
+
+        if success_move:
+            self.robot.wait_until_motion_complete()
+            print(f"[ROBOT_MOVE] Successfully moved to {description}.")
+            if gripper_action_after_move == "open":
+                print("[ROBOT_MOVE] Opening gripper.")
+                self.robot.open_gripper()
+                time.sleep(0.7) # Allow time for gripper
+            elif gripper_action_after_move == "close":
+                print("[ROBOT_MOVE] Closing gripper.")
+                self.robot.close_gripper()
+                time.sleep(0.7) # Allow time for gripper
+            return True
+        else:
+            print(f"[ROBOT_MOVE] CRITICAL: Failed to move to {description}.")
+            return False
+
     def mozaic_generator(self, zone_type, piece_index_in_zone):
         """
         Calculates target ROBOT CARTESIAN pose (X, Y, Z, Rz) for placing a piece.
@@ -275,7 +317,7 @@ class PalletizingRobot:
                                    self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, initial_rz_deg]
         
         self._wait_for_step_confirmation(f"Moving to approach pick pose: {np.round(approach_pose_cartesian,1).tolist()}")
-        success, _, _ = self.robot.move_l_pose(np.array(approach_pose_cartesian), speed=30, acc=30)
+        success, _, _ = self.robot.move_l_pose(np.array(approach_pose_cartesian), speed=20, acc=20)
         if not success:
             print("  Error: Failed to move to Cartesian approach pose.")
             return False
@@ -358,7 +400,7 @@ class PalletizingRobot:
                                self.FIXED_RX_DEG, self.FIXED_RY_DEG, place_rz_on_pallet_deg]
         
         self._wait_for_step_confirmation(f"Moving to approach place pose: {np.round(approach_place_pose,1).tolist()}")
-        success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=30, acc=30)
+        success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=20, acc=20)
         if not success:
             print("  Error: Failed to move to approach place pose.")
             return False
@@ -383,7 +425,7 @@ class PalletizingRobot:
         # 4. Retreat from pallet (lift up)
         # Using the same approach_place_pose for retreat for simplicity
         self._wait_for_step_confirmation(f"Retreating from place pose: {np.round(approach_place_pose,1).tolist()}")
-        success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=30, acc=30)
+        success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=20, acc=20)
         if not success:
             print("  Error: Failed to retreat from place pose.")
             return False 
@@ -515,7 +557,25 @@ class PalletizingRobot:
         # self.object_detected = False # This class attribute is no longer used for this purpose
         print(f"[PICK_AND_PLACE] Cycle complete for this object. Counts: Zone0={self.piece_count_zone_0_deg}, Zone90={self.piece_count_zone_90_deg}, Total={self.piece_num}")
         self._wait_for_step_confirmation("Counts updated. End of pick_and_place cycle for this specific object.")
-        return True # Indicate success for this object
+        
+        # 7. Return to initial neutral pose
+        print("[PICK_AND_PLACE] Returning to initial neutral conveyor pose...")
+        # The "initial_neutral_conveyor" pose in STANDARD_POSES should handle gripper opening.
+        success_return_to_neutral = self._move_robot_to_standard_pose(
+            pose_name="initial_neutral_conveyor" 
+        )
+
+        if not success_return_to_neutral:
+            print("[PICK_AND_PLACE] WARNING: Main pick and place was successful, but failed to return to neutral pose.")
+            # Decide if this should make the whole pick_and_place operation fail.
+            # For now, let's consider it a warning but the PnP itself was successful.
+            # If it MUST return to neutral to be considered a success, then return False here.
+            # return False 
+        else:
+            print("[PICK_AND_PLACE] Successfully returned to neutral pose.")
+
+        self._wait_for_step_confirmation("End of pick_and_place cycle for this specific object.")
+        return True # Indicate success for this object (assuming return to neutral is not a hard fail condition for the PnP itself)
    
     def run(self):
             """Main execution loop for the robot."""
@@ -534,6 +594,21 @@ class PalletizingRobot:
             if self.robot.connect():
                 print("Successfully connected to robot.")
                 self.robot.set_servo_status(1)
+                
+                # --- Move to Initial Pick Position ---
+                move_successful = self._move_robot_to_standard_pose(
+                    pose_name="initial_neutral_conveyor", 
+                    gripper_action_after_move="open" # As per your updated code
+                )
+                if not move_successful:
+                    print("[ROBOT_RUN] CRITICAL: Failed to move to initial neutral pose. Aborting run.")
+                    self._stop_event.set()
+                    if self.robot.is_connected(): # Ensure this method exists or adapt
+                        self.robot.set_servo_status(0)
+                        self.robot.disconnect()
+                    if cam_thread.is_alive(): # Make sure cam_thread is defined in this scope
+                        cam_thread.join(timeout=5.0)
+                    return # Exit the run method
 
                 previous_sensor_state_is_detecting = False
                 SENSOR_ADDRESS = 915
