@@ -219,6 +219,8 @@ class PalletizingRobot:
                 f"CamAngle={object_data_for_queue['piece_angle']:.1f}°, "
                 f"RobJ6Target={object_data_for_queue['target_j6_deg']:.1f}°")
           print(f"    Current queue size: {self.object_queue.qsize()}")
+          
+          self._wait_for_step_confirmation(f"Camera data")
         
         except queue.Full:
           print(f"[MAP & QUEUE] CRITICAL WARNING: Object queue is full. "
