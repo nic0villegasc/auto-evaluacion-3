@@ -44,10 +44,11 @@ class PalletizingRobot:
         
         self.PICK_Z_CONVEYOR = -33.0      # Actual Z height for picking from conveyor
         self.LIFT_Z_COMMON = -150.0       # Common Z height for approach, lift, and retreat
-        self.PLACE_Z_ON_PALLET = -180.0   # TODO: Example value, adjust as needed
+        self.PLACE_Z_ON_PALLET = -120.0   # TODO: Example value, adjust as needed
         
         self.NOMINAL_RX_DEG = -0.584
         self.NOMINAL_RY_DEG = -1.702
+        self.NOMINAL_RZ_DEG = 91.0
         
         self.FIXED_RX_DEG = self.NOMINAL_RX_DEG  # TODO: Place holder
         self.FIXED_RY_DEG = self.NOMINAL_RY_DEG  # TODO: Place holder
@@ -71,7 +72,6 @@ class PalletizingRobot:
         self.PHYSICAL_WIDTH_MM = 90.0  # Physical shorter side of the piece (mm)
         self.PHYSICAL_HEIGHT_MM = 140.0 # Physical longer side of the piece (mm)
         self.ITEM_GAP_MM = 5.0 # Gap between items on pallet
-        self.PLACE_Z_ON_PALLET = 0.0
 
         self.gray_thresh = gray_thresh
         self.area_thresh = area_thresh
@@ -314,7 +314,7 @@ class PalletizingRobot:
         # 1. Move to an approach position (X, Y, LIFT_Z_COMMON)
         initial_rz_deg = target_j6_deg_for_pick # Using target J6 as nominal Rz for less travel
         approach_pose_cartesian = [pick_x, pick_y, self.LIFT_Z_COMMON,
-                                   self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, initial_rz_deg]
+                                   self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, self.NOMINAL_RZ_DEG]
         
         self._wait_for_step_confirmation(f"Moving to approach pick pose: {np.round(approach_pose_cartesian,1).tolist()}")
         success, _, _ = self.robot.move_l_pose(np.array(approach_pose_cartesian), speed=20, acc=20)
