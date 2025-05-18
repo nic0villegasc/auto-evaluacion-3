@@ -318,6 +318,62 @@ class PalletizingRobot:
         print("  Pick sequence successfully completed.")
         return True
     
+    def _place_on_pallet(self, place_x, place_y, place_z_on_pallet, place_lift_z, place_rz_on_pallet_deg):
+        """
+        Commands the robot to perform the place sequence on the pallet.
+        Uses class attributes for fixed Rx, Ry orientations.
+
+        Args:
+            place_x (float): Target X coordinate for placing (robot mm).
+            place_y (float): Target Y coordinate for placing (robot mm).
+            place_z_on_pallet (float): Target Z coordinate for placing (robot mm).
+            place_lift_z (float): Common Z height for approach/retreat (robot mm).
+            place_rz_on_pallet_deg (float): Target Rz orientation on pallet (degrees).
+
+        Returns:
+            bool: True if place sequence is successful, False otherwise.
+        """
+        print(f"Executing place at X:{place_x:.1f}, Y:{place_y:.1f}, Z:{place_z_on_pallet:.1f}, Rz:{place_rz_on_pallet_deg:.1f}")
+
+        # 1. Move to approach position (above the pallet spot)
+        approach_place_pose = [place_x, place_y, place_lift_z,
+                               self.FIXED_RX_DEG, self.FIXED_RY_DEG, place_rz_on_pallet_deg]
+        print(f"  1. Moving to approach place pose: {approach_place_pose}")
+        success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=30, acc=30)
+        if not success:
+            print("  Error: Failed to move to approach place pose.")
+            return False
+        self.robot.wait_until_motion_complete()
+
+        # 2. Move down to actual place position
+        actual_place_pose = [place_x, place_y, place_z_on_pallet,
+                             self.FIXED_RX_DEG, self.FIXED_RY_DEG, place_rz_on_pallet_deg]
+        print(f"  2. Moving to actual place pose: {actual_place_pose}")
+        success, _, _ = self.robot.move_l_pose(np.array(actual_place_pose), speed=20, acc=20)
+        if not success:
+            print("  Error: Failed to move to actual place pose.")
+            return False
+        self.robot.wait_until_motion_complete()
+
+        # 3. Open gripper
+        print("  3. Opening gripper.")
+        self.robot.open_gripper()
+        time.sleep(0.7) # Allow time for gripper to open
+
+        # 4. Retreat from pallet (lift up)
+        # Using the same approach_place_pose for retreat for simplicity
+        print(f"  4. Retreating from place pose: {approach_place_pose}")
+        success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=30, acc=30)
+        if not success:
+            print("  Error: Failed to retreat from place pose.")
+            # Object is placed, but retreat failed. This might not be a critical failure
+            # for the palletizing logic itself, but good to note.
+            return False # Or True depending on how strictly you define success for the place sequence
+        self.robot.wait_until_motion_complete()
+
+        print("  Place sequence successfully completed.")
+        return True
+    
     def _classify_piece_orientation(self):
         """
         Classifies the piece's orientation based on self.piece_angle.
