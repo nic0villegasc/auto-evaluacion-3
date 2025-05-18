@@ -24,7 +24,7 @@ class PalletizingRobot:
         self.object_detected = False
         self.object_queue = queue.Queue(maxsize=max_queue_size)
         self.last_queued_object_props = None
-        self.time_last_object_queued = 0.0
+        self.active_object_props_in_view = None
         
         self.target_x = 0.0 
         self.target_y = 0.0 
@@ -83,7 +83,6 @@ class PalletizingRobot:
         self.NEW_OBJECT_X_DIFF_THRESHOLD = 30  # Min change in X (pixels) to be a new object
         self.NEW_OBJECT_Y_DIFF_THRESHOLD = 30  # Min change in Y (pixels)
         self.NEW_OBJECT_ANGLE_DIFF_THRESHOLD = 30  # Min change in angle (degrees)
-        self.NEW_OBJECT_TIME_THRESHOLD_SEC = 1.0
         
         self.STANDARD_POSES = {
             "initial_neutral_conveyor": {
@@ -132,49 +131,51 @@ class PalletizingRobot:
             cv2.imshow("Robot Camera mask", mask)
             
             if success:
-                current_props = {
+                current_detected_props = {
                     'center_x': center[0],
                     'center_y': center[1],
                     'angle': angle,
                     'width': width,
                     'height': height
                 }
-                is_new_distinct_object = False
-                
-                if self.last_queued_object_props is None:
-                    is_new_distinct_object = True
-                else:
-                    last_props = self.last_queued_object_props
-                    properties_are_different = False
+                should_queue_object = False
 
-                    # --- Positional Difference ---
-                    delta_x = abs(current_props['center_x'] - last_props['center_x'])
-                    delta_y = abs(current_props['center_y'] - last_props['center_y'])
+                if self.active_object_props_in_view is None:
+                    # CASE 1: No object was previously "active" in view. This is genuinely new.
+                    should_queue_object = True
+                    print(f"[CAMERA_THREAD] First detection of an object. Queuing. Props: {current_detected_props}")
+                else:
+                    # CASE 2: An object was already "active". Check if this is a *different* object.
+                    last_active_props = self.active_object_props_in_view
                     
-                    # --- Angle Difference (with wrapping/180-degree symmetry) ---
-                    abs_angle_diff = abs(current_props['angle'] - last_props['angle'])
+                    delta_x = abs(current_detected_props['center_x'] - last_active_props['center_x'])
+                    delta_y = abs(current_detected_props['center_y'] - last_active_props['center_y'])
+                    abs_angle_diff = abs(current_detected_props['angle'] - last_active_props['angle'])
                     sym_angle_diff = min(abs_angle_diff, 180.0 - abs_angle_diff)
                     
-
-                    # --- Check if properties are different ---
-                    if (delta_x > self.NEW_OBJECT_X_DIFF_THRESHOLD and
-                        delta_y > self.NEW_OBJECT_Y_DIFF_THRESHOLD and
+                    if (delta_x > self.NEW_OBJECT_X_DIFF_THRESHOLD or
+                        delta_y > self.NEW_OBJECT_Y_DIFF_THRESHOLD or
                         sym_angle_diff > self.NEW_OBJECT_ANGLE_DIFF_THRESHOLD):
-                        properties_are_different = True
-                    
-                    time_since_last_queued = current_time_monotonic - self.time_last_object_queued
-                    
-                    if properties_are_different:
-                        is_new_distinct_object = True
-                    else:
-                      if time_since_last_queued > self.NEW_OBJECT_TIME_THRESHOLD_SEC:
-                        is_new_distinct_object = True
+                        # The currently detected object is significantly different from the
+                        # one previously considered active. This implies the old one left and this is new.
+                        should_queue_object = True
+                        print(f"[CAMERA_THREAD] Detected object is different from previous active. Queuing. New: {current_detected_props}, Prev Active: {last_active_props}")
+                    # else: Properties are similar to the active object. It's likely the same one,
+                    #       still in view (even if stationary). Do NOT re-queue.
                 
-                if is_new_distinct_object:
-                    print(f"[CAMERA_THREAD] New distinct object identified. Props: {current_props}, Last: {self.last_queued_object_props}, Time: {current_time_monotonic:.2f}")
-                    self.map_camara2robot(center, angle) 
-                    self.last_queued_object_props = current_props
-                    self.time_last_object_queued = current_time_monotonic
+                        if should_queue_object:
+                            self.map_camara2robot(center, angle) 
+                            self.active_object_props_in_view = current_detected_props # Set/Update the active object
+
+                    else: 
+                        # No object detected in the current frame (success == False)
+                        if self.active_object_props_in_view is not None:
+                            # An object *was* active, but is now no longer seen.
+                            # This means it has left the view, so clear the active state.
+                            print(f"[CAMERA_THREAD] Active object ({self.active_object_props_in_view}) no longer detected. Clearing active state.")
+                            self.active_object_props_in_view = None
+                        # else: No object was active, and still no object detected. Nothing to do.
+
                     
             
             if cv2.waitKey(1) & 0xFF == ord('q'):
