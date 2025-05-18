@@ -317,7 +317,28 @@ class PalletizingRobot:
 
         print("  Pick sequence successfully completed.")
         return True
-      
+    
+    def _classify_piece_orientation(self):
+        """
+        Classifies the piece's orientation based on self.piece_angle.
+        self.piece_angle is the raw detected angle from the camera in degrees.
+
+        Returns:
+            str: "0_deg_type", "90_deg_type", or "unclassified".
+        """
+        # Ensure self.piece_angle is within a known range if necessary,
+        # e.g., normalize it to -180 to 180 if it can go beyond.
+        # Assuming self.piece_angle from detect_box is reasonably constrained (e.g., -90 to +90, or 0 to 180 after adjustments)
+
+        # Check for 0-degree type orientation
+        if abs(self.piece_angle) < self.ANGLE_CLASSIFICATION_THRESHOLD_DEG:
+            return "0_deg_type"
+        # Check for 90-degree type orientation (handles +90 and -90)
+        elif abs(abs(self.piece_angle) - 90.0) < self.ANGLE_CLASSIFICATION_THRESHOLD_DEG:
+            return "90_deg_type"
+        else:
+            print(f"[CLASSIFY] Piece angle {self.piece_angle:.1f}° is unclassified (threshold: +/-{self.ANGLE_CLASSIFICATION_THRESHOLD_DEG}°).")
+            return "unclassified"
     
     def pick_and_place(self):
         if not self.object_detected:
