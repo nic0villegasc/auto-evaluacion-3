@@ -162,14 +162,10 @@ class PalletizingRobot:
                         sym_angle_diff > self.NEW_OBJECT_ANGLE_DIFF_THRESHOLD):
                         properties_are_different = True
                     
-                    if properties_are_different:
+                    time_since_last_queued = current_time_monotonic - self.time_last_object_queued
+                    
+                    if properties_are_different and time_since_last_queued > self.NEW_OBJECT_TIME_THRESHOLD_SEC:
                         is_new_distinct_object = True
-                    else:
-                        time_since_last_queued = current_time_monotonic - self.time_last_object_queued
-                        if time_since_last_queued > self.NEW_OBJECT_TIME_THRESHOLD_SEC:
-                            print(f"[CAMERA_THREAD] Similar object, but time threshold ({self.NEW_OBJECT_TIME_THRESHOLD_SEC}s) exceeded "
-                                  f"({time_since_last_queued:.2f}s). Considering new.")
-                            is_new_distinct_object = True
                 
                 if is_new_distinct_object:
                     print(f"[CAMERA_THREAD] New distinct object identified. Props: {current_props}, Last: {self.last_queued_object_props}, Time: {current_time_monotonic:.2f}")
