@@ -235,26 +235,7 @@ class PalletizingRobot:
             self.robot.wait_until_motion_complete()
             print("[INFO] Joint 6 movido a 80.768 grados.")
 
-            rz_actual = 80.768
-
-            # Ahora todos los movimientos usan rz_actual
-            bajar    = [x_pose, self.target_y, fixed_z, rx, ry, rz_actual]
-            levantar = [x_pose, self.target_y, z_subida, rx, ry, rz_actual]
-            caida    = [self.target_x, y_caida, z_subida, rx, ry, rz_actual]
-            vuelta   = [x_vuelta, y_vuelta, z_vuelta, rx, ry, rz_actual]
-
-            self.robot.move_l_pose(np.array(bajar), speed=10, acc=20)
-            self.robot.wait_until_motion_complete()
-            self.robot.close_gripper()
-            self.robot.wait_until_motion_complete()
-            self.robot.move_l_pose(np.array(levantar), speed=10, acc=20)
-            self.robot.wait_until_motion_complete()
-            self.robot.move_l_pose(np.array(caida), speed=10, acc=20)
-            self.robot.wait_until_motion_complete()
-            self.robot.open_gripper()
-            self.robot.wait_until_motion_complete()
-            self.robot.close_gripper()
-            self.robot.move_l_pose(np.array(vuelta), speed=20, acc=20)
+            
             
 
         # CASO 90 GRADOS (vertical)
