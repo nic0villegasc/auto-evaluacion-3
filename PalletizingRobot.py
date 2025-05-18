@@ -554,9 +554,9 @@ class PalletizingRobot:
                             try:
                                 sensor_value = int(sensor_value_str)
                                 if sensor_value == 1:
-                                    current_sensor_state_is_detecting = True
-                                elif sensor_value == 0:
                                     current_sensor_state_is_detecting = False
+                                elif sensor_value == 0:
+                                    current_sensor_state_is_detecting = True
                                 else:
                                     print(f"Warning: Unexpected sensor value ({sensor_value}) at address {SENSOR_ADDRESS}")
                             except ValueError:
