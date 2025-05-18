@@ -210,7 +210,7 @@ class PalletizingRobot:
             fixed_y = 0         # posición fija en Y
             fixed_z = -33       # altura segura para no tocar la cinta
             z_seguro = -170
-            rx, ry, rz = -0.584, -1.702, 91.0  # orientación fija
+            rx, ry, rz = 1.753, -0.411, -4.831  # orientación fija
             z_subida = -150
             y_caida = 470
             y_vuelta = 52.468
@@ -220,8 +220,8 @@ class PalletizingRobot:
             
 
             pose = [x_pose, self.target_y, z_seguro, rx, ry, rz]
-            bajar = [x_pose, self.target_y, fixed_z, rx, ry, 80.768]
-
+            bajar = [x_pose, self.target_y, fixed_z, rx, ry, rz]
+            levantar = [x_pose, y_pose, z_subida, rx, ry, rz]
             self.robot.open_gripper()
             self.robot.wait_until_motion_complete()
             self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
@@ -235,6 +235,23 @@ class PalletizingRobot:
             self.robot.wait_until_motion_complete()
             print("[INFO] Joint 6 movido a 80.768 grados.")
 
+            
+            self.robot.open_gripper()
+            self.robot.wait_until_motion_complete()
+            self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
+            self.robot.wait_until_motion_complete()
+            self.robot.move_l_pose(np.array(bajar), speed=10, acc=20)
+            self.robot.wait_until_motion_complete()
+            self.robot.close_gripper()
+            self.robot.wait_until_motion_complete()
+            self.robot.move_l_pose(np.array(levantar), speed=10, acc=20)
+            self.robot.wait_until_motion_complete()
+            self.robot.move_l_pose(np.array(caida), speed=10, acc=20)
+            self.robot.wait_until_motion_complete()
+            self.robot.open_gripper()
+            self.robot.wait_until_motion_complete()
+            self.robot.close_gripper()
+            self.robot.move_l_pose(np.array(vuelta), speed=20, acc=20)
             
             
 
