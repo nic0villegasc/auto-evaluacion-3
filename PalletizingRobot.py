@@ -88,8 +88,8 @@ class PalletizingRobot:
             "initial_neutral_conveyor": {
                 "coords": [0.0, 0.0, self.LIFT_Z_COMMON, self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, self.NOMINAL_RZ_DEG],
                 "description": "initial neutral pose above conveyor (X=0, Y=0)",
-                "speed": 20, 
-                "acc": 20
+                "speed": 40, 
+                "acc": 30
             },
             # Add other poses like "safe_home", "reject_bin_approach", etc.
         }
@@ -380,7 +380,7 @@ class PalletizingRobot:
                                    self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, self.NOMINAL_RZ_DEG]
         
         self._wait_for_step_confirmation(f"Moving to approach pick pose: {np.round(approach_pose_cartesian,1).tolist()}")
-        success, _, _ = self.robot.move_l_pose(np.array(approach_pose_cartesian), speed=20, acc=20)
+        success, _, _ = self.robot.move_l_pose(np.array(approach_pose_cartesian), speed=40, acc=30)
         if not success:
             print("  Error: Failed to move to Cartesian approach pose.")
             return False
@@ -399,7 +399,7 @@ class PalletizingRobot:
         target_joints_deg_array[5] = target_j6_deg_for_pick # J6 is index 5
         
         self._wait_for_step_confirmation(f"Orienting J6 to {target_j6_deg_for_pick:.1f} deg. Target joints: {np.round(target_joints_deg_array,2).tolist()}")
-        success, _, _ = self.robot.move_j_joint(target_joints_deg_array, speed=20, acc=20)
+        success, _, _ = self.robot.move_j_joint(target_joints_deg_array, speed=40, acc=30)
         if not success:
             print("  Error: Failed to orient Joint 6.")
             return False
@@ -472,7 +472,7 @@ class PalletizingRobot:
                                current_pose_cartesian[3], current_pose_cartesian[4], current_pose_cartesian[5]]
         
         self._wait_for_step_confirmation(f"Moving to approach place pose: {np.round(approach_place_pose,1).tolist()}")
-        success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=20, acc=20)
+        success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=40, acc=30)
         if not success:
             print("  Error: Failed to move to approach place pose.")
             return False
