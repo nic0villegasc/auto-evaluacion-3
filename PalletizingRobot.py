@@ -36,7 +36,7 @@ class PalletizingRobot:
 
         # Affine transformation coefficients for Y-coordinate
         # Y_robot = Y_MAPPING_SLOPE * y_cam_pixel + Y_MAPPING_INTERCEPT
-        self.Y_MAPPING_SLOPE = -0.15
+        self.Y_MAPPING_SLOPE = -0.16
         self.Y_MAPPING_INTERCEPT = -4
         
         self.ANG_MAPPING_SLOPE = 0.9294
@@ -61,11 +61,11 @@ class PalletizingRobot:
         # Base ROBOT CARTESIAN coordinates for palletizing zones (mm and degrees)
         self.PALLET_ZONE_0_BASE_X = 128  # Robot X for corner/start of zone 0
         self.PALLET_ZONE_0_BASE_Y = 581 # Robot Y for corner/start of zone 0
-        self.PALLET_ZONE_0_PLACE_RZ_DEG = 180
+        self.PALLET_ZONE_0_PLACE_RZ_DEG = 0
 
         self.PALLET_ZONE_90_BASE_X = 665  # Robot X for corner/start of zone 90
         self.PALLET_ZONE_90_BASE_Y = 581  # Robot Y for corner/start of zone 90
-        self.PALLET_ZONE_90_PLACE_RZ_DEG = 180
+        self.PALLET_ZONE_90_PLACE_RZ_DEG = 0
 
         # Mosaic parameters (dimensions in mm)
         self.ITEMS_PER_ROW = 3 # Example: 3 items per row on pallet
@@ -398,10 +398,19 @@ class PalletizingRobot:
             bool: True if place sequence is successful, False otherwise.
         """
         print(f"Executing place at X:{place_x:.1f}, Y:{place_y:.1f}, Z:{place_z_on_pallet:.1f}, Rz:{place_rz_on_pallet_deg:.1f}")
+        
+        # 0. Get tool user pose.
+        
+        self._wait_for_step_confirmation("Getting TCP pose for place on pallet")
+        success_tcp, current_pose_cartesian, _ = self.robot.get_tool_pose(user_coord=1, tool_num=2)
+        if not success_tcp:
+            print("  Error: Failed to get TCP pose for place on pallet.")
+            return False
+        print(f"  TCP pose before place on pallet: {np.round(current_pose_cartesian,2).tolist()}")
 
         # 1. Move to approach position (above the pallet spot)
         approach_place_pose = [place_x, place_y, place_lift_z,
-                               self.FIXED_RX_DEG, self.FIXED_RY_DEG, place_rz_on_pallet_deg]
+                               current_pose_cartesian[3], current_pose_cartesian[4], current_pose_cartesian[5]]
         
         self._wait_for_step_confirmation(f"Moving to approach place pose: {np.round(approach_place_pose,1).tolist()}")
         success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=20, acc=20)
@@ -412,7 +421,7 @@ class PalletizingRobot:
 
         # 2. Move down to actual place position
         actual_place_pose = [place_x, place_y, place_z_on_pallet,
-                             self.FIXED_RX_DEG, self.FIXED_RY_DEG, place_rz_on_pallet_deg]
+                             current_pose_cartesian[3], current_pose_cartesian[4], current_pose_cartesian[5]]
         
         self._wait_for_step_confirmation(f"Moving to actual place pose: {np.round(actual_place_pose,1).tolist()}")
         success, _, _ = self.robot.move_l_pose(np.array(actual_place_pose), speed=20, acc=20)
