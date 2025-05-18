@@ -6,11 +6,12 @@ from SDK import ELITE
 from CameraCalibration import CameraCalibrationHelper
 import threading
 import math
+import queue
 
 class PalletizingRobot:
         
     def __init__(self, robot_ip, gray_thresh = 100, area_thresh = 45000, 
-                 cam_min_lim = (0, 0), cam_max_lim = (640, 480), step_mode=True):
+                 cam_min_lim = (0, 0), cam_max_lim = (640, 480), step_mode=True, max_queue_size=10):
         self.robot = ELITE(robot_ip)
         self.frame = None
         self.camera = None
@@ -21,6 +22,7 @@ class PalletizingRobot:
 
         self.piece_num = 0 
         self.object_detected = False
+        self.object_queue = queue.Queue(maxsize=max_queue_size)
         
         self.target_x = 0.0 
         self.target_y = 0.0 
@@ -34,18 +36,21 @@ class PalletizingRobot:
 
         # Affine transformation coefficients for Y-coordinate
         # Y_robot = Y_MAPPING_SLOPE * y_cam_pixel + Y_MAPPING_INTERCEPT
-        # TODO: Need to calibrate these values!
-        self.Y_MAPPING_SLOPE = -0.1713  # Placeholder - CALIBRATE THIS: Y_MAPPING_SLOPE = (RobotY2 - RobotY1) / (v2 - v1)
-        self.Y_MAPPING_INTERCEPT = -8 # Placeholder - CALIBRATE THIS: Y_MAPPING_INTERCEPT = RobotY1 - Y_MAPPING_SLOPE * v1
+        self.Y_MAPPING_SLOPE = -0.1713
+        self.Y_MAPPING_INTERCEPT = -8
         
         self.ANG_MAPPING_SLOPE = 0.9294
         self.ANG_MAPPING_INTERCEPT = 83
         
         self.PICK_Z_CONVEYOR = -33.0      # Actual Z height for picking from conveyor
         self.LIFT_Z_COMMON = -150.0       # Common Z height for approach, lift, and retreat
+        self.PLACE_Z_ON_PALLET = -180.0   # TODO: Example value, adjust as needed
         
         self.NOMINAL_RX_DEG = -0.584
         self.NOMINAL_RY_DEG = -1.702
+        
+        self.FIXED_RX_DEG = self.NOMINAL_RX_DEG  # TODO: Place holder
+        self.FIXED_RY_DEG = self.NOMINAL_RY_DEG  # TODO: Place holder
         
         self.ANGLE_CLASSIFICATION_THRESHOLD_DEG = 20.0
 
@@ -66,11 +71,14 @@ class PalletizingRobot:
         self.PHYSICAL_WIDTH_MM = 90.0  # Physical shorter side of the piece (mm)
         self.PHYSICAL_HEIGHT_MM = 140.0 # Physical longer side of the piece (mm)
         self.ITEM_GAP_MM = 5.0 # Gap between items on pallet
+        self.PLACE_Z_ON_PALLET = 0.0
 
         self.gray_thresh = gray_thresh
         self.area_thresh = area_thresh
         self.cam_min_lim = cam_min_lim
         self.cam_max_lim = cam_max_lim
+        
+        self._stop_event = threading.Event()
         
     def initialize_camera(self):
         """Initializes the camera and performs calibration."""
@@ -96,14 +104,16 @@ class PalletizingRobot:
             frame = self.helper.correct_image(frame)
             frame, mask, center, angle, success = self.detect_box(frame, self.gray_thresh,
                                                                   self.area_thresh, iter_ = 1)
-            frame = cv2.rectangle(frame, self.cam_min_lim, self.cam_max_lim, (0, 0, 0), 10)
+            frame = cv2.rectangle(frame, self.cam_min_lim, self.cam_max_lim, (0, 0, 255), 2)
+            
+            cv2.putText(frame, f"Queue: {self.object_queue.qsize()}",
+                            (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+
             cv2.imshow("Robot Camera", frame)
             cv2.imshow("Robot Camera mask", mask)
             
             if success:
                 self.map_camara2robot(center, angle)
-            else:
-                self.object_detected = False 
             
             if cv2.waitKey(1) & 0xFF == ord('q'):
               break
@@ -169,7 +179,6 @@ class PalletizingRobot:
         Uses calibrated linear mapping coefficients.
         """
         if center_coords is None:
-            self.object_detected = False
             return
 
         cx, cy = center_coords
@@ -177,17 +186,36 @@ class PalletizingRobot:
         v_cam_px = cy # camera y-pixel
 
         # Calculate robot's target X 
-        Xr = self.X_MAPPING_SLOPE * u_cam_px + self.X_MAPPING_INTERCEPT
+        robot_target_x = self.X_MAPPING_SLOPE * u_cam_px + self.X_MAPPING_INTERCEPT
         
         # Calculate robot's target Y
-        Yr = self.Y_MAPPING_SLOPE * v_cam_px + self.Y_MAPPING_INTERCEPT
+        robot_target_y = self.Y_MAPPING_SLOPE * v_cam_px + self.Y_MAPPING_INTERCEPT
 
-        self.target_x = Xr
-        self.target_y = Yr
-        self.piece_angle = detected_angle
-        self.target_j6_deg = self.ANG_MAPPING_SLOPE * detected_angle + self.ANG_MAPPING_INTERCEPT
+        # Calculate robot's target j6
+        robot_target_j6_deg = self.ANG_MAPPING_SLOPE * detected_angle + self.ANG_MAPPING_INTERCEPT
         
-        self.object_detected = True
+        object_data_for_queue = {
+            'target_x': robot_target_x,
+            'target_y': robot_target_y,
+            'piece_angle': detected_angle,  # Raw camera angle for classification
+            'target_j6_deg': robot_target_j6_deg  # Robot's J6 target for the pick operation
+        }
+        
+        try:
+          self.object_queue.put(object_data_for_queue)
+          print(f"[MAP & QUEUE] Object data added to queue. CamInput: u={u_cam_px}, v={v_cam_px}")
+          print(f"    Queued Data -> X={object_data_for_queue['target_x']:.1f}mm, "
+                f"Y={object_data_for_queue['target_y']:.1f}mm, "
+                f"CamAngle={object_data_for_queue['piece_angle']:.1f}°, "
+                f"RobJ6Target={object_data_for_queue['target_j6_deg']:.1f}°")
+          print(f"    Current queue size: {self.object_queue.qsize()}")
+        
+        except queue.Full:
+          print(f"[MAP & QUEUE] CRITICAL WARNING: Object queue is full. "
+                  f"Failed to add new object. This may indicate an issue if using blocking put().")
+        
+        except Exception as e:
+          print(f"[MAP & QUEUE] ERROR: An unexpected error occurred while adding object to queue: {e}")
         
         print(f"[MAP] CamInput: u={u_cam_px}, v={v_cam_px}")
         print(f"[MAP] Robot Target → X={self.target_x:.1f} mm, Y={self.target_y:.1f} mm, Angle (cam): {self.piece_angle:.1f}°, Target j6 (rob): {self.target_j6_deg:.1f}°")
@@ -364,85 +392,117 @@ class PalletizingRobot:
         print("  Place sequence successfully completed.")
         return True
     
-    def _classify_piece_orientation(self):
+    def _classify_piece_orientation(self, piece_angle_from_camera): # Parameter added
         """
-        Classifies the piece's orientation based on self.piece_angle.
-        self.piece_angle is the raw detected angle from the camera in degrees.
+        Classifies the piece's orientation based on the provided piece_angle_from_camera.
+        This angle is the raw detected angle from the camera in degrees.
 
         Returns:
             str: "0_deg_type", "90_deg_type", or "unclassified".
         """
-        # Ensure self.piece_angle is within a known range if necessary,
-        # e.g., normalize it to -180 to 180 if it can go beyond.
-        # Assuming self.piece_angle from detect_box is reasonably constrained (e.g., -90 to +90, or 0 to 180 after adjustments)
+        # Assuming piece_angle_from_camera from detect_box (via queue) is reasonably constrained
+        # (e.g., -90 to +90, or 0 to 180 after adjustments in detect_box).
 
         # Check for 0-degree type orientation
-        if abs(self.piece_angle) < self.ANGLE_CLASSIFICATION_THRESHOLD_DEG:
+        if abs(piece_angle_from_camera) < self.ANGLE_CLASSIFICATION_THRESHOLD_DEG:
             return "0_deg_type"
         # Check for 90-degree type orientation (handles +90 and -90)
-        elif abs(abs(self.piece_angle) - 90.0) < self.ANGLE_CLASSIFICATION_THRESHOLD_DEG:
+        # The logic abs(abs(angle) - 90) handles angles like -85 or +95 correctly as 90-type.
+        elif abs(abs(piece_angle_from_camera) - 90.0) < self.ANGLE_CLASSIFICATION_THRESHOLD_DEG:
             return "90_deg_type"
         else:
-            print(f"[CLASSIFY] Piece angle {self.piece_angle:.1f}° is unclassified (threshold: +/-{self.ANGLE_CLASSIFICATION_THRESHOLD_DEG}°).")
+            print(f"[CLASSIFY] Piece angle {piece_angle_from_camera:.1f}° is UNCLASSIFIED (threshold: +/-{self.ANGLE_CLASSIFICATION_THRESHOLD_DEG}°).")
             return "unclassified"
     
-    def pick_and_place(self):
-        self._wait_for_step_confirmation("Start of pick_and_place cycle")
-        if not self.object_detected:
-            print("[PICK_AND_PLACE] No object detected to pick and place.")
-            return False
+    def pick_and_place(self, object_data_from_queue): # <-- Parameter changed
+        """
+        Performs the complete pick and place cycle for a given object.
+        object_data_from_queue is a dictionary retrieved from the queue, containing:
+        {'target_x', 'target_y', 'piece_angle', 'target_j6_deg'}
+        """
+        self._wait_for_step_confirmation(f"Start of pick_and_place cycle for object: {object_data_from_queue}")
 
-        print(f"[PICK_AND_PLACE] Initiating pick for object at X={self.target_x:.1f}, Y={self.target_y:.1f} (J6 target: {self.target_j6_deg:.1f} deg)")
+        if not object_data_from_queue: # Should ideally not happen if called correctly
+            print("[PICK_AND_PLACE] CRITICAL: No object data provided. Aborting this cycle.")
+            return False # Indicate failure
 
-        pick_successful = self._pick_from_conveyor(self.target_x, self.target_y, self.target_j6_deg)
+        # Extract data from the dictionary passed as argument
+        pick_target_x = object_data_from_queue['target_x']
+        pick_target_y = object_data_from_queue['target_y']
+        # This is the raw camera angle, used for classification
+        raw_piece_angle_from_cam = object_data_from_queue['piece_angle']
+        # This is the robot's J6 target angle for the pick operation
+        pick_j6_deg_for_robot = object_data_from_queue['target_j6_deg']
+
+        print(f"[PICK_AND_PLACE] Processing object: X={pick_target_x:.1f}, Y={pick_target_y:.1f}, "
+              f"CamAngle={raw_piece_angle_from_cam:.1f}°, RobotPickJ6={pick_j6_deg_for_robot:.1f}°")
+
+        # 1. Execute Pick Operation
+        # Ensure _pick_from_conveyor uses these specific coordinates and J6 angle
+        pick_successful = self._pick_from_conveyor(pick_target_x, pick_target_y, pick_j6_deg_for_robot)
 
         if not pick_successful:
-            print("[PICK_AND_PLACE] Pick operation failed. Aborting.")
-            self.object_detected = False
-            return False
-        
+            print("[PICK_AND_PLACE] Pick operation failed. Aborting cycle for this object.")
+            # Note: The robot might still be holding the gripper closed if pick started but failed mid-way.
+            # Consider if an explicit gripper open is needed here for error recovery.
+            return False # Indicate failure
+
         self._wait_for_step_confirmation("Pick successful. Proceeding to classify orientation.")
 
         # 2. Classify Piece Orientation
-        zone_type = self._classify_piece_orientation()
-        print(f"[PICK_AND_PLACE] Classified as '{zone_type}'. Camera angle was {self.piece_angle:.1f}°")
-        
+        # _classify_piece_orientation now needs to accept the angle.
+        # We stored the raw camera angle in the queue for this purpose.
+        zone_type = self._classify_piece_orientation(raw_piece_angle_from_cam)
+        print(f"[PICK_AND_PLACE] Object classified as '{zone_type}' (based on cam angle: {raw_piece_angle_from_cam:.1f}°).")
+
         if zone_type == "unclassified":
-            self._wait_for_step_confirmation(f"Piece unclassified (angle: {self.piece_angle:.1f}°). Action: Abort placement.")
-            # TODO: Implement reject logic if needed
-            print("  Aborting placement. Piece is still held.")
-            return False 
+            self._wait_for_step_confirmation(f"Piece is UNCLASSIFIED (angle: {raw_piece_angle_from_cam:.1f}°). Aborting placement.")
+            # TODO: Implement reject sequence:
+            # 1. Move to a reject bin/area.
+            # 2. Open gripper.
+            # 3. Return to a safe/home position.
+            print("    Action: Aborting placement. Piece is currently held. Implement reject sequence!")
+            # For now, we'll just open the gripper as a placeholder for rejection.
+            # This might not be the right Z height or location.
+            # self.robot.open_gripper()
+            # time.sleep(0.7)
+            return False # Indicate failure or aborted cycle
 
         self._wait_for_step_confirmation(f"Orientation classified as '{zone_type}'. Proceeding to mosaic generator.")
 
-        # 3. Get Piece Index
+        # 3. Get Piece Index for the designated zone
         current_piece_index_in_zone = 0
         if zone_type == "0_deg_type":
             current_piece_index_in_zone = self.piece_count_zone_0_deg
         elif zone_type == "90_deg_type":
             current_piece_index_in_zone = self.piece_count_zone_90_deg
         
-        # 4. Generate Placement Pose
+        # 4. Generate Placement Pose using the mosaic generator
         place_pose_details = self.mozaic_generator(zone_type, current_piece_index_in_zone)
 
-        if place_pose_details is None or place_pose_details[0] is None:
-            self._wait_for_step_confirmation(f"Mozaic generator failed (Zone: {zone_type}, Index: {current_piece_index_in_zone}). Pallet might be full. Action: Abort placement.")
-            print("  Aborting placement. Piece is still held.")
-            return False
+        if place_pose_details is None or place_pose_details[0] is None: # Check if mozaic_generator returned valid data
+            self._wait_for_step_confirmation(f"Mosaic generator FAILED or pallet zone full (Zone: {zone_type}, Index: {current_piece_index_in_zone}). Aborting placement.")
+            # TODO: Implement handling for full pallet or invalid placement (e.g., move to an overflow area).
+            print("    Action: Aborting placement. Piece is currently held. Implement alternative placement/reject!")
+            # self.robot.open_gripper() # Placeholder
+            # time.sleep(0.7)
+            return False # Indicate failure
 
         place_x, place_y, place_z_on_pallet, place_rz_on_pallet_deg = place_pose_details
-        self._wait_for_step_confirmation(f"Mosaic generated place pose: {np.round(place_pose_details,1).tolist()}. Proceeding to place.")
+        self._wait_for_step_confirmation(f"Mosaic generated. Target place pose: X={place_x:.1f}, Y={place_y:.1f}, Z={place_z_on_pallet:.1f}, Rz={place_rz_on_pallet_deg:.1f}. Proceeding to place.")
 
-        # 5. Execute Place Sequence (assuming _place_on_pallet will also have internal steps)
+        # 5. Execute Place Sequence
+        # _place_on_pallet needs: place_x, place_y, place_z_on_pallet, place_lift_z (self.LIFT_Z_COMMON), place_rz_on_pallet_deg
         place_successful = self._place_on_pallet(place_x, place_y, place_z_on_pallet,
-                                                 self.LIFT_Z_COMMON,
+                                                 self.LIFT_Z_COMMON, # Using common lift Z for approach/retreat during place
                                                  place_rz_on_pallet_deg)
 
         if not place_successful:
             print("[PICK_AND_PLACE] Place operation failed.")
-            # TODO: Handle place failure
-            return False
-        
+            # TODO: Handle place failure (e.g., retry logic, move to error recovery state).
+            # Piece is likely still held by the gripper at the failed placement attempt.
+            return False # Indicate failure
+
         self._wait_for_step_confirmation("Place successful. Proceeding to update counts.")
 
         # 6. Update Counts
@@ -451,81 +511,121 @@ class PalletizingRobot:
         elif zone_type == "90_deg_type":
             self.piece_count_zone_90_deg += 1
         
-        self.piece_num += 1
-        self.object_detected = False
-        print(f"[PICK_AND_PLACE] Cycle complete. Zone 0 count: {self.piece_count_zone_0_deg}, Zone 90 count: {self.piece_count_zone_90_deg}, Total: {self.piece_num}")
-        self._wait_for_step_confirmation("Counts updated. End of pick_and_place cycle.")
-        return True
+        self.piece_num += 1 # Increment total pieces processed by this robot instance
+        # self.object_detected = False # This class attribute is no longer used for this purpose
+        print(f"[PICK_AND_PLACE] Cycle complete for this object. Counts: Zone0={self.piece_count_zone_0_deg}, Zone90={self.piece_count_zone_90_deg}, Total={self.piece_num}")
+        self._wait_for_step_confirmation("Counts updated. End of pick_and_place cycle for this specific object.")
+        return True # Indicate success for this object
    
     def run(self):
-        """Main execution loop for the robot."""
-        
-        if not self.camera_available:
-            print("Error: Camera not initialized. Cannot start robot run sequence.")
-            return
+            """Main execution loop for the robot."""
 
-        cam_thread = threading.Thread(target=self.camera_thread, daemon=True)
-        cam_thread.start()
-        print("Camera thread started.")
+            if not self.camera_available:
+                print("Error: Camera not initialized. Cannot start robot run sequence.")
+                self._stop_event.set()
+                return
 
-        if self.robot.connect():
-            print("Successfully connected to robot.")
-            self.robot.set_servo_status(1) 
+            self._stop_event.clear()
 
-            previous_sensor_state_is_detecting = None 
-            SENSOR_ADDRESS = 915 
-            
-            try:
-                while True:
-                    if not cam_thread.is_alive():
-                        print("Error: Camera thread has stopped. Exiting main loop.")
-                        break
+            cam_thread = threading.Thread(target=self.camera_thread)
+            cam_thread.start()
+            print("Camera thread started.")
 
-                    success_read, sensor_value, _ = self.robot.send_cmd("getVirtualOutput", {"addr": SENSOR_ADDRESS})
-                    current_sensor_state_is_detecting = None 
+            if self.robot.connect():
+                print("Successfully connected to robot.")
+                self.robot.set_servo_status(1)
 
-                    if success_read:
-                        sensor_value = int(sensor_value) if sensor_value is not None else -1
-                        if sensor_value == 1: 
-                            current_sensor_state_is_detecting = True
-                        elif sensor_value == 0: 
-                            current_sensor_state_is_detecting = False
-                        else:
-                            print(f"Warning: Unexpected sensor value ({sensor_value}) at address {SENSOR_ADDRESS}")
-                    else:
-                        print(f"Warning: Failed to read virtual output at address {SENSOR_ADDRESS}.")
-                    
-                    if current_sensor_state_is_detecting is not None:
-                        if current_sensor_state_is_detecting != previous_sensor_state_is_detecting:
-                            if current_sensor_state_is_detecting is True:
-                                print("Camera has also detected an object. Initiating pick and place.")
-                                self.pick_and_place()
-                            else: 
-                                print("Sensor: No object at pick-up point / object removed.")
-                            
+                previous_sensor_state_is_detecting = False
+                SENSOR_ADDRESS = 915
+                QUEUE_GET_TIMEOUT = 0.05
+
+                try:
+                    while not self._stop_event.is_set():
+                        if not cam_thread.is_alive() and not self._stop_event.is_set():
+                            print("CRITICAL: Camera thread has stopped unexpectedly. Signaling shutdown.")
+                            self._stop_event.set()
+                            break
+
+                        # Sensor reading logic
+                        success_read, sensor_value_str, _ = self.robot.send_cmd("getVirtualOutput", {"addr": SENSOR_ADDRESS})
+                        current_sensor_state_is_detecting = None
+
+                        if success_read and sensor_value_str is not None:
+                            try:
+                                sensor_value = int(sensor_value_str)
+                                if sensor_value == 1:
+                                    current_sensor_state_is_detecting = True
+                                elif sensor_value == 0:
+                                    current_sensor_state_is_detecting = False
+                                else:
+                                    print(f"Warning: Unexpected sensor value ({sensor_value}) at address {SENSOR_ADDRESS}")
+                            except ValueError:
+                                print(f"Warning: Received non-integer sensor value '{sensor_value_str}' from address {SENSOR_ADDRESS}")
+                        elif not success_read:
+                            print(f"Warning: Failed to read virtual output at address {SENSOR_ADDRESS}.")
+
+                        # --- Main Logic: Sensor Trigger and Queue Check ---
+                        if current_sensor_state_is_detecting is True:
+                            if not previous_sensor_state_is_detecting:
+                                print(f"[ROBOT_RUN] Sensor at {SENSOR_ADDRESS} indicates object presence.")
+
+                            try:
+                                object_data_to_process = self.object_queue.get(block=True, timeout=QUEUE_GET_TIMEOUT)
+
+                                print(f"[ROBOT_RUN] Sensor active & object retrieved from queue (size before get: {self.object_queue.qsize()+1}).")
+                                print(f"    Data: X={object_data_to_process['target_x']:.1f}, Y={object_data_to_process['target_y']:.1f}")
+
+                                success_pnp = self.pick_and_place(object_data_to_process)
+
+                                if success_pnp:
+                                    print(f"[ROBOT_RUN] Pick and place cycle successful for one object.")
+                                else:
+                                    print(f"[ROBOT_RUN] Pick and place cycle failed or was aborted for one object.")
+                                
+                                self.object_queue.task_done()
+
+                            except queue.Empty:
+                                if previous_sensor_state_is_detecting:
+                                    print(f"[ROBOT_RUN] Sensor active, but object queue is empty (or timed out). Waiting...")
+                            except Exception as e_pnp:
+                                print(f"[ROBOT_RUN] CRITICAL ERROR during pick_and_place or queue get: {e_pnp}")
+                                import traceback
+                                traceback.print_exc()
+                        
+                        elif current_sensor_state_is_detecting is False:
+                            if previous_sensor_state_is_detecting is True:
+                                print(f"[ROBOT_RUN] Sensor at {SENSOR_ADDRESS} indicates object removed or no longer present.")
+                        
+                        if current_sensor_state_is_detecting is not None:
                             previous_sensor_state_is_detecting = current_sensor_state_is_detecting
+
+                        self._stop_event.wait(0.1)
+
+                except KeyboardInterrupt:
+                    print("[ROBOT_RUN] Keyboard interrupt detected. Signaling shutdown.")
+                    self._stop_event.set()
+                except Exception as e:
+                    print(f"[ROBOT_RUN] CRITICAL ERROR in main execution loop: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    self._stop_event.set()
+                finally:
+                    print("[ROBOT_RUN] Main loop ending. Initiating shutdown sequence...")
+                    self._stop_event.set()
                     
-                    time.sleep(0.2) # Polling interval for the sensor
+            else:
+                print("[ROBOT_RUN] Failed to connect to the robot. Application will exit.")
+                self._stop_event.set()
 
-            except KeyboardInterrupt:
-                print("Keyboard interrupt detected. Shutting down.")
-            except Exception as e:
-                print(f"An error occurred in the main loop: {e}")
-            finally:
-                print("Disconnecting from robot.")
-                if self.robot.sock: # Check if socket is still open
-                    self.robot.set_servo_status(0) 
-                    self.robot.disconnect()
-        else:
-          print("Failed to connect to the robot.")
+            if cam_thread.is_alive():
+                print("[ROBOT_RUN] Waiting for camera thread to join...")
+                cam_thread.join(timeout=5.0)
+                if cam_thread.is_alive():
+                    print("[ROBOT_RUN] WARNING: Camera thread did not join in time. It might be stuck.")
+            else:
+                print("[ROBOT_RUN] Camera thread already finished.")
 
-        if cam_thread.is_alive():
-            print("Waiting for camera thread to join...") 
-            # To ensure clean exit, signal camera thread to stop if it hasn't already (e.g., via a flag)
-            # For now, just join with a timeout.
-            cam_thread.join(timeout=1.0) 
-
-        print("Palletizing robot application finished.")
+            print("Palletizing robot application finished.")
 
 
 if __name__ == "__main__":
