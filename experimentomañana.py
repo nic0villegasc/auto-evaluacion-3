@@ -290,8 +290,6 @@ class PalletizingRobot:
         print("[INFO] El bloque NO cumple condiciones para 180° ni 90°. No se ejecuta movimiento.")
         return
 
-
-    print(f"[PICK_AND_PLACE] Llegó a X = {self.target_x:.1f} mm")
    
     def run(self):
         thread = threading.Thread(target=self.camera_thread, daemon=True)
