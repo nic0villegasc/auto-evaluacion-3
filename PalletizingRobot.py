@@ -302,7 +302,7 @@ class PalletizingRobot:
 
         # 4. Get current TCP pose after J6 orientation
         self._wait_for_step_confirmation("Getting TCP pose after J6 orientation")
-        success_tcp, tcp_after_j6_orient, _ = self.robot.get_tool_pose_in_base_coords()
+        success_tcp, tcp_after_j6_orient, _ = self.robot.get_tool_pose(user_coord=1, tool_num=2)
         if not success_tcp:
             print("  Error: Failed to get TCP pose after J6 orientation.")
             return False
@@ -313,7 +313,7 @@ class PalletizingRobot:
                                      tcp_after_j6_orient[3], tcp_after_j6_orient[4], tcp_after_j6_orient[5]]
         self._wait_for_step_confirmation(f"Moving down to pick (Cartesian): {np.round(pick_pose_cartesian_final,1).tolist()}")
         success, _, _ = self.robot.move_l_pose(np.array(pick_pose_cartesian_final), speed=10, acc=10)
-        if not success:
+        if not success: 
             print("  Error: Failed to move to actual pick pose.")
             return False
         self.robot.wait_until_motion_complete()
