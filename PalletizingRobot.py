@@ -398,24 +398,85 @@ class PalletizingRobot:
     
     def pick_and_place(self):
         if not self.object_detected:
-            print("[PICK_AND_PLACE] No object detected to pick and place.")
-            return # Or return False
+            print("[PICK_AND_PLACE] No object detected to initiate cycle.")
+            return False # No action taken
 
-        # self.target_x, self.target_y, and self.target_j6_deg are set by map_camara2robot
-        print(f"[PICK_AND_PLACE] Initiating pick for object at X={self.target_x:.1f}, Y={self.target_y:.1f} (J6 target: {self.target_j6_deg:.1f} deg)")
+        # self.target_x, self.target_y are absolute mapped coords for pick
+        # self.target_j6_deg is the robot's J6 angle (degrees) for picking
+        
+        print(f"[PICK_AND_PLACE] Cycle Start: Obj at X={self.target_x:.1f}, Y={self.target_y:.1f}, PickJ6={self.target_j6_deg:.1f} (CamAngle={self.piece_angle:.1f})")
 
-        # Call the revised pick helper function
-        pick_successful = self._pick_from_conveyor(self.target_x, self.target_y, self.target_j6_deg)
+        # 1. Execute Pick Sequence
+        # _pick_from_conveyor now expects pick_x, pick_y, and target_j6_deg as arguments.
+        pick_successful = self._pick_from_conveyor(self.target_x, 
+                                                 self.target_y, 
+                                                 self.target_j6_deg)
 
         if not pick_successful:
-            print("[PICK_AND_PLACE] Pick operation failed. Aborting.")
-            self.object_detected = False # Reset flag
-            return # Or return False
+            print("[PICK_AND_PLACE] Pick operation failed. Aborting cycle.")
+            self.object_detected = False # Reset detection flag
+            return False # Indicate pick failure
 
-        self.object_detected = False 
-        self.piece_num += 1 
-        print("[PICK_AND_PLACE] Pick successful. Placement logic to follow.")
-        return
+        print("[PICK_AND_PLACE] Pick successful.")
+
+        # 2. Classify Piece Orientation for Palletizing
+        # _classify_piece_orientation uses self.piece_angle (raw camera angle)
+        zone_type = self._classify_piece_orientation() 
+
+        if zone_type == "unclassified":
+            print(f"[PICK_AND_PLACE] Piece with camera angle {self.piece_angle:.1f}° unclassified. Cannot determine pallet zone.")
+            # TODO: Implement logic for unclassified pieces (e.g., move to a reject bin)
+            # For now, we consider the cycle incomplete for palletizing.
+            # The robot is currently holding the piece. You might want to call a specific "drop_rejected_piece" function.
+            print("  Action: Aborting placement. Piece is still held by gripper.")
+            # self.object_detected = False # If piece is handled (e.g. rejected)
+            return False 
+
+        # 3. Get Piece Index for the Selected Zone
+        current_piece_index_in_zone = 0
+        if zone_type == "0_deg_type":
+            current_piece_index_in_zone = self.piece_count_zone_0_deg
+        elif zone_type == "90_deg_type":
+            current_piece_index_in_zone = self.piece_count_zone_90_deg
+        
+        print(f"[PICK_AND_PLACE] Classified as '{zone_type}'. Piece index for this zone: {current_piece_index_in_zone}")
+
+        # 4. Generate Placement Pose from Mozaic Generator
+        place_pose_details = self.mozaic_generator(zone_type, current_piece_index_in_zone)
+
+        if place_pose_details is None or place_pose_details[0] is None: 
+            print(f"[PICK_AND_PLACE] Failed to get placement location from mozaic_generator (Zone: {zone_type}, Index: {current_piece_index_in_zone}). Pallet might be full.")
+            # TODO: Handle situation where pallet is full. Robot is holding a piece.
+            print("  Action: Aborting placement. Piece is still held by gripper.")
+            return False
+
+        place_x, place_y, place_z_on_pallet, place_rz_on_pallet_deg = place_pose_details
+        print(f"[PICK_AND_PLACE] Mosaic generated place pose: X={place_x:.1f}, Y={place_y:.1f}, Z={place_z_on_pallet:.1f}, PlaceRz={place_rz_on_pallet_deg:.1f}")
+
+        # 5. Execute Place Sequence
+        place_successful = self._place_on_pallet(place_x, place_y, place_z_on_pallet, 
+                                                 self.LIFT_Z_COMMON, # Using common lift Z for approach/retreat
+                                                 place_rz_on_pallet_deg)
+
+        if not place_successful:
+            print("[PICK_AND_PLACE] Place operation failed.")
+            # TODO: Handle place failure. Robot might still be holding the piece, or it was dropped incorrectly.
+            return False 
+
+        print("[PICK_AND_PLACE] Place successful.")
+
+        # 6. Update Counts
+        if zone_type == "0_deg_type":
+            self.piece_count_zone_0_deg += 1
+            print(f"  Piece count for {zone_type} zone: {self.piece_count_zone_0_deg}")
+        elif zone_type == "90_deg_type":
+            self.piece_count_zone_90_deg += 1
+            print(f"  Piece count for {zone_type} zone: {self.piece_count_zone_90_deg}")
+        
+        self.piece_num += 1 # Overall piece count
+        self.object_detected = False # Reset for the next detection cycle
+        print(f"[PICK_AND_PLACE] Cycle complete. Total pieces processed: {self.piece_num}")
+        return True # Indicate successful cycle
    
     def run(self):
         """Main execution loop for the robot."""
