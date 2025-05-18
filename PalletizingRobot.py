@@ -105,55 +105,55 @@ class PalletizingRobot:
             if cv2.waitKey(1) & 0xFF == ord('q'):
               break
 
-        def detect_box(self, frame, gray_thresh, area_thresh, iter_ = 1):
-          """
-          The angle of the wood piece is in the range of (-90, 90) in degreesm
-          so that the conversion to the robot's Rz is easy.
+    def detect_box(self, frame, gray_thresh, area_thresh, iter_ = 1):
+      """
+      The angle of the wood piece is in the range of (-90, 90) in degreesm
+      so that the conversion to the robot's Rz is easy.
 
-          the iter_ parameter could be changed in case of very noisy environments,
-          but it is not recommended to change it too much as it will distort the 
-          calculation of the center of mass.        
-          """
-          aux = frame[self.cam_min_lim[1]:self.cam_max_lim[1],
-                      self.cam_min_lim[0]:self.cam_max_lim[0]]
-          
-          # Grayscale detection
-          gray_image = cv2.cvtColor(aux, cv2.COLOR_BGR2GRAY)
-          
-          # mask thresh
-          _, mask = cv2.threshold(gray_image, gray_thresh, 255, cv2.THRESH_BINARY)
-          mask = cv2.erode(mask, None, iterations=iter_)
-          mask = cv2.dilate(mask, None, iterations=iter_)
-          
-          # find contour with largest area
-          contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-          
-          # Check if there is contour:
-          if not contours:
-              return frame, mask, None, None, 0
-          
-          # check if area is over the min threshold
-          largest_contour = max(contours, key=cv2.contourArea)
-          area = cv2.contourArea(largest_contour)
-          if area < area_thresh:
-              return frame, mask, None, None, 0
-          
-          # Detect square position and orientation 
-          rect = cv2.minAreaRect(largest_contour)
-          center, (width, height), angle = rect
-          
-          if width < height:
-              angle += 90
-              
-          center = (int(center[0]) + self.cam_min_lim[0], int(center[1]) + self.cam_min_lim[1])
+      the iter_ parameter could be changed in case of very noisy environments,
+      but it is not recommended to change it too much as it will distort the 
+      calculation of the center of mass.        
+      """
+      aux = frame[self.cam_min_lim[1]:self.cam_max_lim[1],
+                  self.cam_min_lim[0]:self.cam_max_lim[0]]
       
-          # draw over frame
-          box = cv2.boxPoints(rect).astype(int)
-          box[:, 0] =  box[:, 0] + self.cam_min_lim[0]
-          box[:, 1] =  box[:, 1] + self.cam_min_lim[1]
-          frame = cv2.drawContours(frame, [box], 0, (0, 255, 0), 2) 
-          frame = cv2.circle(frame, center, 5, (255, 0, 0), 10)
-          return frame, mask, center, angle, 1
+      # Grayscale detection
+      gray_image = cv2.cvtColor(aux, cv2.COLOR_BGR2GRAY)
+      
+      # mask thresh
+      _, mask = cv2.threshold(gray_image, gray_thresh, 255, cv2.THRESH_BINARY)
+      mask = cv2.erode(mask, None, iterations=iter_)
+      mask = cv2.dilate(mask, None, iterations=iter_)
+      
+      # find contour with largest area
+      contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+      
+      # Check if there is contour:
+      if not contours:
+          return frame, mask, None, None, 0
+      
+      # check if area is over the min threshold
+      largest_contour = max(contours, key=cv2.contourArea)
+      area = cv2.contourArea(largest_contour)
+      if area < area_thresh:
+          return frame, mask, None, None, 0
+      
+      # Detect square position and orientation 
+      rect = cv2.minAreaRect(largest_contour)
+      center, (width, height), angle = rect
+      
+      if width < height:
+          angle += 90
+          
+      center = (int(center[0]) + self.cam_min_lim[0], int(center[1]) + self.cam_min_lim[1])
+  
+      # draw over frame
+      box = cv2.boxPoints(rect).astype(int)
+      box[:, 0] =  box[:, 0] + self.cam_min_lim[0]
+      box[:, 1] =  box[:, 1] + self.cam_min_lim[1]
+      frame = cv2.drawContours(frame, [box], 0, (0, 255, 0), 2) 
+      frame = cv2.circle(frame, center, 5, (255, 0, 0), 10)
+      return frame, mask, center, angle, 1
     
     def _wait_for_step_confirmation(self, step_message):
         """ If step-by-step mode is enabled, prints a message and waits for Enter key. """
