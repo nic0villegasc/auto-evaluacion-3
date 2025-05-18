@@ -40,7 +40,7 @@ class PalletizingRobot:
         self.Y_MAPPING_INTERCEPT = -3
         
         self.ANG_MAPPING_SLOPE = 0.9294
-        self.ANG_MAPPING_INTERCEPT = 90
+        self.ANG_MAPPING_INTERCEPT = 91
         
         self.PICK_Z_CONVEYOR = -33.0      # Actual Z height for picking from conveyor
         self.LIFT_Z_COMMON = -150.0       # Common Z height for approach, lift, and retreat
@@ -708,7 +708,7 @@ if __name__ == "__main__":
     robot_ip = "169.168.0.200" # Replace with your robot's IP
 
     robot_controller = PalletizingRobot(robot_ip,
-                                        step_mode=True) 
+                                        step_mode=False) 
     
     print("Initializing camera...")
     robot_controller.initialize_camera()
