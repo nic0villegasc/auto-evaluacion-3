@@ -186,13 +186,13 @@ class PalletizingRobot:
       
       # Check if there is contour:
       if not contours:
-          return frame, mask, None, None, 0
+          return frame, mask, None, None, None, None, 0
       
       # check if area is over the min threshold
       largest_contour = max(contours, key=cv2.contourArea)
       area = cv2.contourArea(largest_contour)
       if area < area_thresh:
-          return frame, mask, None, None, 0
+          return frame, mask, None, None, None, None, 0
       
       # Detect square position and orientation 
       rect = cv2.minAreaRect(largest_contour)
