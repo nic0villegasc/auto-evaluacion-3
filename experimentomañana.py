@@ -226,6 +226,15 @@ class PalletizingRobot:
             self.robot.wait_until_motion_complete()
             self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
+            success, joints, _ = self.robot.get_current_joints()
+            if not success:
+                print("[ERROR] No se pudieron obtener los valores de los joints.")
+                return
+            joints[5] = 80.768
+            self.robot.move_j_joint(joints, speed=10, acc=20)
+            self.robot.wait_until_motion_complete()
+            print("[INFO] Joint 6 movido a 80.768 grados.")
+
             rz_actual = 80.768
 
             # Ahora todos los movimientos usan rz_actual
