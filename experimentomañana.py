@@ -219,8 +219,8 @@ class PalletizingRobot:
             x_pose = self.target_x - 16
             
 
-            pose = [x_pose, self.target_y, z_seguro, rx, ry, rz]
-            bajar = [x_pose, self.target_y, fixed_z, rx, ry, rz]
+            pose = [x_pose, self.target_y, z_seguro, rx, ry, 91]
+            bajar = [x_pose, self.target_y, fixed_z, rx, ry, 91]
 
             self.robot.open_gripper()
             self.robot.wait_until_motion_complete()
@@ -234,9 +234,7 @@ class PalletizingRobot:
             self.robot.move_j_joint(joints, speed=10, acc=20)
             self.robot.wait_until_motion_complete()
             print("[INFO] Joint 6 movido a 80.768 grados.")
-            
-            self.robot.open_gripper()
-            self.robot.wait_until_motion_complete()
+
             self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
             self.robot.move_l_pose(np.array(bajar), speed=10, acc=20)
