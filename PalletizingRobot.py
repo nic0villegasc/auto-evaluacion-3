@@ -297,8 +297,8 @@ class PalletizingRobot:
         pose_data = self.STANDARD_POSES[pose_name]
         target_pose_coords = np.array(pose_data["coords"])
         description = pose_data["description"]
-        speed = pose_data.get("speed", 30) # Default speed if not in dict
-        acc = pose_data.get("acc", 30)   # Default acc if not in dict
+        speed = pose_data.get("speed", 80) # Default speed if not in dict
+        acc = pose_data.get("acc", 50)   # Default acc if not in dict
 
         self._wait_for_step_confirmation(f"Moving to {description}: {np.round(target_pose_coords,1).tolist()}")
         print(f"[ROBOT_MOVE] Moving to {description}: {np.round(target_pose_coords,1).tolist()}")
@@ -472,7 +472,7 @@ class PalletizingRobot:
                                current_pose_cartesian[3], current_pose_cartesian[4], current_pose_cartesian[5]]
         
         self._wait_for_step_confirmation(f"Moving to approach place pose: {np.round(approach_place_pose,1).tolist()}")
-        success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=60, acc=30)
+        success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=80, acc=50)
         if not success:
             print("  Error: Failed to move to approach place pose.")
             return False
