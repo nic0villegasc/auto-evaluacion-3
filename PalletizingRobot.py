@@ -32,7 +32,7 @@ class PalletizingRobot:
         # Affine transformation coefficients for X-coordinate
         # X_robot = X_MAPPING_SLOPE * x_cam_pixel + X_MAPPING_INTERCEPT
         self.X_MAPPING_SLOPE = 0.5208
-        self.X_MAPPING_INTERCEPT = -130
+        self.X_MAPPING_INTERCEPT = -125
 
         # Affine transformation coefficients for Y-coordinate
         # Y_robot = Y_MAPPING_SLOPE * y_cam_pixel + Y_MAPPING_INTERCEPT
