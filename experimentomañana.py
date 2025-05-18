@@ -223,6 +223,7 @@ class PalletizingRobot:
             bajar = [x_pose, self.target_y, fixed_z, rx, ry, rz]
             levantar = [x_pose, y_pose, z_subida, rx, ry, rz]
             caida = [x_caida, y_pose, z_subida, rx, ry, 80.768]
+            vuelta = [x_vuelta, y_vuelta, z_vuelta, rx, ry, rz]
             self.robot.open_gripper()
             self.robot.wait_until_motion_complete()
             self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
@@ -280,6 +281,8 @@ class PalletizingRobot:
             bajar = [x_pose, y_pose, fixed_z, rx, ry, rz]
             levantar = [x_pose, y_pose, z_subida, rx, ry, rz]
             caida = [self.target_x, y_caida, z_subida, rx, ry, rz]
+            vuelta = [x_vuelta, y_vuelta, z_vuelta, rx, ry, rz]
+
             self.robot.open_gripper()
             self.robot.wait_until_motion_complete()
             self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
