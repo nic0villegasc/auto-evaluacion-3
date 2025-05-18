@@ -163,18 +163,18 @@ class PalletizingRobot:
                     # else: Properties are similar to the active object. It's likely the same one,
                     #       still in view (even if stationary). Do NOT re-queue.
                 
-                        if should_queue_object:
-                            self.map_camara2robot(center, angle) 
-                            self.active_object_props_in_view = current_detected_props # Set/Update the active object
+                if should_queue_object:
+                    self.map_camara2robot(center, angle) 
+                    self.active_object_props_in_view = current_detected_props # Set/Update the active object
 
-                    else: 
-                        # No object detected in the current frame (success == False)
-                        if self.active_object_props_in_view is not None:
-                            # An object *was* active, but is now no longer seen.
-                            # This means it has left the view, so clear the active state.
-                            print(f"[CAMERA_THREAD] Active object ({self.active_object_props_in_view}) no longer detected. Clearing active state.")
-                            self.active_object_props_in_view = None
-                        # else: No object was active, and still no object detected. Nothing to do.
+            else: 
+                # No object detected in the current frame (success == False)
+                if self.active_object_props_in_view is not None:
+                    # An object *was* active, but is now no longer seen.
+                    # This means it has left the view, so clear the active state.
+                    print(f"[CAMERA_THREAD] Active object ({self.active_object_props_in_view}) no longer detected. Clearing active state.")
+                    self.active_object_props_in_view = None
+                # else: No object was active, and still no object detected. Nothing to do.
 
                     
             
