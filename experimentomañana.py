@@ -204,7 +204,7 @@ class PalletizingRobot:
         print(f"[INFO] Width: {self.detected_width:.1f}, Height: {self.detected_height:.1f}")
 
         # CASO 180 GRADOS (horizontal)
-        if 170 <= self.detected_angle <= 190 and self.detected_width < self.detected_height:
+        if -10 <= self.detected_angle <= 10 and self.detected_width < self.detected_height:
             print("[INFO] El bloque está orientado en 0 grados (horizontal). Ejecutando flujo en X.")
             # Coordenadas fijas excepto X
             fixed_y = 0         # posición fija en Y
