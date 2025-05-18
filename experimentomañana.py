@@ -198,13 +198,18 @@ class PalletizingRobot:
         y_vuelta=52.468
         x_vuelta=-35.709
         z_vuelta=-150.004
-        x_pose=self.target_x - 17
+        x_pose=self.target_x - 16
         # Pose destino
 
         pose = [x_pose, self.target_y, z_seguro, rx, ry, rz]
         bajar=[x_pose, self.target_y, fixed_z, rx, ry, rz]
 
         # Mover robot a esa posición
+        joints = self.robot.get_actual_joints()
+        joints[5] = np.deg2rad(80.768)   
+        self.robot.move_j_joint(np.array(joints), speed=10, acc=20)
+        self.robot.wait_until_motion_complete()
+
         self.robot.open_gripper()
         self.robot.wait_until_motion_complete()
         self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
