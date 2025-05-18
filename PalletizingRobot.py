@@ -562,7 +562,8 @@ class PalletizingRobot:
         print("[PICK_AND_PLACE] Returning to initial neutral conveyor pose...")
         # The "initial_neutral_conveyor" pose in STANDARD_POSES should handle gripper opening.
         success_return_to_neutral = self._move_robot_to_standard_pose(
-            pose_name="initial_neutral_conveyor" 
+            pose_name="initial_neutral_conveyor",
+            gripper_action_after_move="open"
         )
 
         if not success_return_to_neutral:
