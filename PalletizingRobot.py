@@ -80,7 +80,7 @@ class PalletizingRobot:
         
         self.STANDARD_POSES = {
             "initial_neutral_conveyor": {
-                "coords": [0.0, 0.0, self.LIFT_Z_COMMON, self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, 0],
+                "coords": [0.0, 0.0, self.LIFT_Z_COMMON, self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, self.NOMINAL_RZ_DEG],
                 "description": "initial neutral pose above conveyor (X=0, Y=0)",
                 "speed": 20, 
                 "acc": 20
@@ -556,7 +556,7 @@ class PalletizingRobot:
         self.piece_num += 1 # Increment total pieces processed by this robot instance
         # self.object_detected = False # This class attribute is no longer used for this purpose
         print(f"[PICK_AND_PLACE] Cycle complete for this object. Counts: Zone0={self.piece_count_zone_0_deg}, Zone90={self.piece_count_zone_90_deg}, Total={self.piece_num}")
-        self._wait_for_step_confirmation("Counts updated. End of pick_and_place cycle for this specific object.")
+        self._wait_for_step_confirmation("Counts updated.")
         
         # 7. Return to initial neutral pose
         print("[PICK_AND_PLACE] Returning to initial neutral conveyor pose...")
