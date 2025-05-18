@@ -23,6 +23,7 @@ class PalletizingRobot:
         self.piece_num = 0 
         self.object_detected = False
         self.object_queue = queue.Queue(maxsize=max_queue_size)
+        self.last_queued_object_props = None 
         
         self.target_x = 0.0 
         self.target_y = 0.0 
