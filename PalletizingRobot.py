@@ -75,7 +75,7 @@ class PalletizingRobot:
         self.MAX_Z_LAYERS_PER_ZONE = 3
         self.PHYSICAL_WIDTH_MM = 95.0  # Physical shorter side of the piece (mm)
         self.PHYSICAL_HEIGHT_MM = 150.0 # Physical longer side of the piece (mm)
-        self.PHYSICAL_THICKNESS_MM = 95.0
+        self.PHYSICAL_THICKNESS_MM = 90.0
         self.ITEM_GAP_MM = 30.0 # Gap between items on pallet
         
         self.BASE_Z_FOR_FIRST_LAYER = self.PLACE_Z_PALLET_SURFACE - self.PHYSICAL_THICKNESS_MM / 2.0
