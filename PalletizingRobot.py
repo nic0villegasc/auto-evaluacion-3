@@ -46,7 +46,8 @@ class PalletizingRobot:
         
         self.PICK_Z_CONVEYOR = -33.0      # Actual Z height for picking from conveyor
         self.LIFT_Z_COMMON = -150.0       # Common Z height for approach, lift, and retreat
-        self.PLACE_Z_ON_PALLET = 63 - 90
+        self.PLACE_Z_PALLET_SURFACE = 63
+        self.BASE_Z_FOR_FIRST_LAYER = self.PLACE_Z_PALLET_SURFACE + self.PHYSICAL_THICKNESS_MM / 2.0
         
         self.NOMINAL_RX_DEG = -0.584
         self.NOMINAL_RY_DEG = -1.702
@@ -70,10 +71,16 @@ class PalletizingRobot:
         self.PALLET_ZONE_90_PLACE_RZ_DEG = 0
 
         # Mosaic parameters (dimensions in mm)
-        self.ITEMS_PER_ROW = 3 # Example: 3 items per row on pallet
-        self.PHYSICAL_WIDTH_MM = 90.0  # Physical shorter side of the piece (mm)
-        self.PHYSICAL_HEIGHT_MM = 140.0 # Physical longer side of the piece (mm)
+        self.ITEMS_PER_ROW = 2
+        self.ITEMS_PER_Z_LAYER_PATTERN = 2
+        self.MAX_Z_LAYERS_PER_ZONE = 2 
+        self.PHYSICAL_WIDTH_MM = 95.0  # Physical shorter side of the piece (mm)
+        self.PHYSICAL_HEIGHT_MM = 150.0 # Physical longer side of the piece (mm)
+        self.PHYSICAL_THICKNESS_MM = 95.0
         self.ITEM_GAP_MM = 5.0 # Gap between items on pallet
+        
+        self.PALLET_PRIMARY_RZ_DEG = 0.0
+        self.PALLET_SECONDARY_RZ_DEG = 90.0
 
         self.gray_thresh = gray_thresh
         self.area_thresh = area_thresh
@@ -324,51 +331,60 @@ class PalletizingRobot:
     def mozaic_generator(self, zone_type, piece_index_in_zone):
         """
         Calculates target ROBOT CARTESIAN pose (X, Y, Z, Rz) for placing a piece.
-        Returns: (target_x, target_y, target_z, target_rz_on_pallet_deg) or None
+        Returns: (target_x, target_y, target_z, target_j6_on_pallet_deg) or None
         """
         print(f"Mozaic generator for zone: {zone_type}, piece index: {piece_index_in_zone}")
         
-        target_x, target_y, target_rz_on_pallet_deg = None, None, None
-        target_z = self.PLACE_Z_ON_PALLET # Z is fixed for placing on this layer
-
-        col = piece_index_in_zone % self.ITEMS_PER_ROW
-        row = piece_index_in_zone // self.ITEMS_PER_ROW
+        base_center_x, base_center_y = 0.0, 0.0
         
-        # TODO: HARDCODED!
-        col = 0
-        row = 0
-
         if zone_type == "0_deg_type":
-            base_x = self.PALLET_ZONE_0_BASE_X
-            base_y = self.PALLET_ZONE_0_BASE_Y
-            target_rz_on_pallet_deg = self.PALLET_ZONE_0_PLACE_RZ_DEG
-            # Assuming for 0-deg type, PHYSICAL_WIDTH_MM aligns with X-spacing, PHYSICAL_HEIGHT_MM with Y-spacing
-            spacing_x = self.PHYSICAL_WIDTH_MM + self.ITEM_GAP_MM
-            spacing_y = self.PHYSICAL_HEIGHT_MM + self.ITEM_GAP_MM
+            base_center_x = self.PALLET_ZONE_0_CENTER_X
+            base_center_y = self.PALLET_ZONE_0_CENTER_Y
         elif zone_type == "90_deg_type":
-            base_x = self.PALLET_ZONE_90_BASE_X
-            base_y = self.PALLET_ZONE_90_BASE_Y
-            target_rz_on_pallet_deg = self.PALLET_ZONE_90_PLACE_RZ_DEG
-            # Assuming for 90-deg type, PHYSICAL_HEIGHT_MM aligns with X-spacing (piece is rotated)
-            spacing_x = self.PHYSICAL_HEIGHT_MM + self.ITEM_GAP_MM
-            spacing_y = self.PHYSICAL_WIDTH_MM + self.ITEM_GAP_MM
+            base_center_x = self.PALLET_ZONE_90_CENTER_X
+            base_center_y = self.PALLET_ZONE_90_CENTER_Y
         else:
             print(f"Error: Unknown zone_type '{zone_type}' in mozaic_generator.")
             return None, None, None, None
+          
+        current_z_layer_index = piece_index_in_zone // self.ITEMS_PER_Z_LAYER_PATTERN
+        index_within_pair = piece_index_in_zone % self.ITEMS_PER_Z_LAYER_PATTERN  # Will be 0 or 1
 
-        target_x = base_x + col * spacing_x
-        target_y = base_y + row * spacing_y
+        target_z = self.BASE_Z_FOR_FIRST_LAYER - (current_z_layer_index * self.PHYSICAL_THICKNESS_MM)
+        target_x, target_y, target_j6_on_pallet_deg = None, None, None
+        
+        if current_z_layer_index % 2 == 0:
+            target_j6_on_pallet_deg = self.PALLET_PRIMARY_RZ_DEG
             
-        # TODO: Implement logic to check if pallet zone is full based on rows/cols capacity
-        # max_rows = 2 # Example
-        # if row >= max_rows:
-        #    print(f"Pallet zone {zone_type} is full.")
-        #    return None, None, None, None
+            target_y = base_center_y
             
-        print(f"  Mosaic for {zone_type}, Idx {piece_index_in_zone}: Col {col}, Row {row} -> X {target_x:.1f}, Y {target_y:.1f}, Z {target_z:.1f}, RzPlt {target_rz_on_pallet_deg:.1f}")
-        return target_x, target_y, target_z, target_rz_on_pallet_deg
+            offset_val_x = (self.PHYSICAL_WIDTH_MM / 2.0) + (self.ITEM_GAP_MM / 2.0)
+            
+            if index_within_pair == 0:
+                target_x = base_center_x - offset_val_x
+            else:
+                target_x = base_center_x + offset_val_x
+            print(f"  Zone {zone_type}, Z-Layer {current_z_layer_index} (X-offset): Piece in pair {index_within_pair}, j6={target_j6_on_pallet_deg} deg")
 
-    # Inside class PalletizingRobot:
+        else:
+            target_j6_on_pallet_deg = self.PALLET_SECONDARY_RZ_DEG
+            
+            target_x = base_center_x
+            
+            offset_val_y = (self.PHYSICAL_WIDTH_MM / 2.0) + (self.ITEM_GAP_MM / 2.0)
+
+            if index_within_pair == 0:
+                target_y = base_center_y - offset_val_y 
+                target_y = base_center_y + offset_val_y
+            print(f"  Zone {zone_type}, Z-Layer {current_z_layer_index} (Y-offset): Piece in pair {index_within_pair}, j6={target_j6_on_pallet_deg} deg")
+
+        
+        if current_z_layer_index >= self.MAX_Z_LAYERS_PER_ZONE:
+            print(f"Error: Pallet zone '{zone_type}' is full. Max Z-layers ({MAX_Z_LAYERS_PER_ZONE}) reached.")
+            return None, None, None, None
+        
+        print(f"  Mosaic for Zone {zone_type}, Overall Idx {piece_index_in_zone}: ZLayer {current_z_layer_index}, Pair Idx {index_within_pair} -> X {target_x:.1f}, Y {target_y:.1f}, Z {target_z:.1f}, j6Plt {target_j6_on_pallet_deg:.1f}")
+        return target_x, target_y, target_z, target_j6_on_pallet_deg
 
     def _pick_from_conveyor(self, pick_x, pick_y, target_j6_deg_for_pick): # Renamed last arg for clarity
         """ Commands the robot to pick an object, with step-by-step confirmation. """
@@ -441,7 +457,7 @@ class PalletizingRobot:
         print("  Pick sequence successfully completed.")
         return True
     
-    def _place_on_pallet(self, place_x, place_y, place_z_on_pallet, place_lift_z, place_rz_on_pallet_deg):
+    def _place_on_pallet(self, place_x, place_y, place_z_on_pallet, place_lift_z, place_j6_on_pallet_deg):
         """
         Commands the robot to perform the place sequence on the pallet.
         Includes step-by-step confirmation if enabled.
@@ -456,7 +472,7 @@ class PalletizingRobot:
         Returns:
             bool: True if place sequence is successful, False otherwise.
         """
-        print(f"Executing place at X:{place_x:.1f}, Y:{place_y:.1f}, Z:{place_z_on_pallet:.1f}, Rz:{place_rz_on_pallet_deg:.1f}")
+        print(f"Executing place at X:{place_x:.1f}, Y:{place_y:.1f}, Z:{place_z_on_pallet:.1f}, j6:{place_j6_on_pallet_deg:.1f}")
         
         # 0. Get tool user pose.
         
@@ -475,6 +491,25 @@ class PalletizingRobot:
         success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=80, acc=50)
         if not success:
             print("  Error: Failed to move to approach place pose.")
+            return False
+        self.robot.wait_until_motion_complete()
+        
+        # 1.1 Get current joint positions
+        self._wait_for_step_confirmation("Getting current joint positions before J6 orient")
+        success_joints, current_joints_deg, _ = self.robot.get_current_joints()
+        if not success_joints:
+            print("  Error: Failed to get current joint positions.")
+            return False
+        print(f"  Current joints (deg): {np.round(current_joints_deg, 2).tolist()}")
+
+        # 1.2 Prepare and execute J6 orientation
+        target_joints_deg_array = np.array(current_joints_deg)
+        target_joints_deg_array[5] = place_j6_on_pallet_deg # J6 is index 5
+        
+        self._wait_for_step_confirmation(f"Orienting J6 to {place_j6_on_pallet_deg:.1f} deg. Target joints: {np.round(target_joints_deg_array,2).tolist()}")
+        success, _, _ = self.robot.move_j_joint(target_joints_deg_array, speed=40, acc=30)
+        if not success:
+            print("  Error: Failed to orient Joint 6.")
             return False
         self.robot.wait_until_motion_complete()
 
@@ -602,14 +637,14 @@ class PalletizingRobot:
             # time.sleep(0.7)
             return False # Indicate failure
 
-        place_x, place_y, place_z_on_pallet, place_rz_on_pallet_deg = place_pose_details
+        place_x, place_y, place_z_on_pallet, place_j6_on_pallet_deg = place_pose_details
         self._wait_for_step_confirmation(f"Mosaic generated. Target place pose: X={place_x:.1f}, Y={place_y:.1f}, Z={place_z_on_pallet:.1f}, Rz={place_rz_on_pallet_deg:.1f}. Proceeding to place.")
 
         # 5. Execute Place Sequence
         # _place_on_pallet needs: place_x, place_y, place_z_on_pallet, place_lift_z (self.LIFT_Z_COMMON), place_rz_on_pallet_deg
         place_successful = self._place_on_pallet(place_x, place_y, place_z_on_pallet,
                                                  self.LIFT_Z_COMMON, # Using common lift Z for approach/retreat during place
-                                                 place_rz_on_pallet_deg)
+                                                 place_j6_on_pallet_deg)
 
         if not place_successful:
             print("[PICK_AND_PLACE] Place operation failed.")
