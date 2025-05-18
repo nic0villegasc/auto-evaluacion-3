@@ -182,8 +182,8 @@ class PalletizingRobot:
         return None
     
     def pick_and_place(self):
-    if not self.object_detected:
-        return
+        if not self.object_detected:
+            return
 
     print("roberto come caca")
     print(f"[PICK_AND_PLACE] Ángulo detectado = {self.detected_angle:.1f}°")
