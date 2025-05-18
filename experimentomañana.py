@@ -106,6 +106,10 @@ class PalletizingRobot:
         if width < height:
             angle += 90
         
+        self.detected_width = width
+        self.detected_height = height
+        self.detected_angle = angle
+        
         # Agregado: imprimir width, height y ángulo
         print(f"[INFO] Width: {width:.1f}, Height: {height:.1f}, Angle: {angle:.1f}°")
         
