@@ -217,11 +217,12 @@ class PalletizingRobot:
             x_vuelta = -35.709
             z_vuelta = -150.004
             x_pose = self.target_x - 16
-            
+            y_pose = self.target_y
 
             pose = [x_pose, self.target_y, z_seguro, rx, ry, rz]
             bajar = [x_pose, self.target_y, fixed_z, rx, ry, rz]
             levantar = [x_pose, y_pose, z_subida, rx, ry, rz]
+
             self.robot.open_gripper()
             self.robot.wait_until_motion_complete()
             self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
