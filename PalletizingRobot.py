@@ -44,7 +44,7 @@ class PalletizingRobot:
         
         self.PICK_Z_CONVEYOR = -33.0      # Actual Z height for picking from conveyor
         self.LIFT_Z_COMMON = -150.0       # Common Z height for approach, lift, and retreat
-        self.PLACE_Z_ON_PALLET = -120.0   # TODO: Example value, adjust as needed
+        self.PLACE_Z_ON_PALLET = 63 - 90
         
         self.NOMINAL_RX_DEG = -0.584
         self.NOMINAL_RY_DEG = -1.702
@@ -59,12 +59,12 @@ class PalletizingRobot:
         self.piece_count_zone_90_deg = 0
 
         # Base ROBOT CARTESIAN coordinates for palletizing zones (mm and degrees)
-        self.PALLET_ZONE_0_BASE_X = -410  # Robot X for corner/start of zone 0
-        self.PALLET_ZONE_0_BASE_Y = 0.0 # Robot Y for corner/start of zone 0
+        self.PALLET_ZONE_0_BASE_X = 128  # Robot X for corner/start of zone 0
+        self.PALLET_ZONE_0_BASE_Y = 581 # Robot Y for corner/start of zone 0
         self.PALLET_ZONE_0_PLACE_RZ_DEG = 180
 
-        self.PALLET_ZONE_90_BASE_X = 0.0  # Robot X for corner/start of zone 90
-        self.PALLET_ZONE_90_BASE_Y = 400.0  # Robot Y for corner/start of zone 90
+        self.PALLET_ZONE_90_BASE_X = 665  # Robot X for corner/start of zone 90
+        self.PALLET_ZONE_90_BASE_Y = 581  # Robot Y for corner/start of zone 90
         self.PALLET_ZONE_90_PLACE_RZ_DEG = 180
 
         # Mosaic parameters (dimensions in mm)
@@ -274,6 +274,10 @@ class PalletizingRobot:
 
         col = piece_index_in_zone % self.ITEMS_PER_ROW
         row = piece_index_in_zone // self.ITEMS_PER_ROW
+        
+        # TODO: HARDCODED!
+        col = 0
+        row = 0
 
         if zone_type == "0_deg_type":
             base_x = self.PALLET_ZONE_0_BASE_X
