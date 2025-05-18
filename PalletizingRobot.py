@@ -23,7 +23,7 @@ class PalletizingRobot:
         self.target_x = 0.0 
         self.target_y = 0.0 
         self.piece_angle = 0.0
-        self.target_j6_rad = 0.0
+        self.target_j6_deg  = 0.0
 
         # Affine transformation coefficients for X-coordinate
         # X_robot = X_MAPPING_SLOPE * x_cam_pixel + X_MAPPING_INTERCEPT
@@ -35,6 +35,12 @@ class PalletizingRobot:
         # TODO: Need to calibrate these values!
         self.Y_MAPPING_SLOPE = 0.5  # Placeholder - CALIBRATE THIS: Y_MAPPING_SLOPE = (RobotY2 - RobotY1) / (v2 - v1)
         self.Y_MAPPING_INTERCEPT = -100.0 # Placeholder - CALIBRATE THIS: Y_MAPPING_INTERCEPT = RobotY1 - Y_MAPPING_SLOPE * v1
+        
+        self.PICK_Z_CONVEYOR = -33.0      # Actual Z height for picking from conveyor
+        self.LIFT_Z_COMMON = -150.0       # Common Z height for approach, lift, and retreat
+        
+        self.NOMINAL_RX_DEG = -0.584
+        self.NOMINAL_RY_DEG = -1.702
 
         self.gray_thresh = gray_thresh
         self.area_thresh = area_thresh
@@ -150,13 +156,12 @@ class PalletizingRobot:
         self.target_x = Xr
         self.target_y = Yr
         self.piece_angle = detected_angle
-        target_j6_deg = self.piece_angle + 180.0
-        self.target_j6_rad = math.radians(target_j6_deg)
+        self.target_j6_deg = self.piece_angle + 180.0
         
         self.object_detected = True
         
         print(f"[MAP] CamInput: u={u_cam_px}, v={v_cam_px}")
-        print(f"[MAP] Robot Target → X={self.target_x:.1f} mm, Y={self.target_y:.1f} mm, Angle (cam): {self.piece_angle:.1f}°, Target Rz (rob): {target_j6_deg:.1f}° ({self.target_j6_rad:.3f} rad)")
+        print(f"[MAP] Robot Target → X={self.target_x:.1f} mm, Y={self.target_y:.1f} mm, Angle (cam): {self.piece_angle:.1f}°, Target Rz (rob): {self.target_j6_deg:.1f}°")
 
     def mozaic_generator(self):
         """
@@ -168,61 +173,120 @@ class PalletizingRobot:
         
         print("Mosaic generator called - currently a placeholder.")
         return None 
+
+    def _pick_from_conveyor(self, pick_x, pick_y, target_j6_deg):
+        """
+        Commands the robot to pick an object from (pick_x, pick_y) on the conveyor.
+        Uses self.target_j6_deg for final tool orientation via a joint move.
+        Uses class attributes for Z heights.
+
+        Args:
+            pick_x (float): Target X coordinate for picking (center of object).
+            pick_y (float): Target Y coordinate for picking (center of object).
+
+        Returns:
+            bool: True if pick sequence is successful (commands sent), False otherwise.
+        """
+        print(f"Executing pick at X:{pick_x:.1f}, Y:{pick_y:.1f} (J6 target: {target_j6_deg:.1f} deg)")
+
+        # 1. Move to an approach position (X, Y, LIFT_Z_COMMON)
+        #    Use a nominal Rz for this initial approach, as J6 will be set precisely next.
+        #    If your robot tends to "wind up" J6, a more neutral initial Rz might be better.
+        #    For simplicity, let's use a nominal Rz, e.g., 0 or an Rz close to the expected target.
+        #    The previously calculated `self.piece_angle + 180.0` can be used here.
+        initial_rz_deg = target_j6_deg # TODO: Check if value is correct
+
+        approach_pose_cartesian = [pick_x, pick_y, self.LIFT_Z_COMMON,
+                                   self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, initial_rz_deg]
+        print(f"  1. Moving to approach (Cartesian): {approach_pose_cartesian}")
+        success, _, _ = self.robot.move_l_pose(np.array(approach_pose_cartesian), speed=30, acc=30)
+        if not success:
+            print("  Error: Failed to move to Cartesian approach pose.")
+            return False
+        self.robot.wait_until_motion_complete()
+
+        # 2. Get current joint positions (robot is now at the X,Y,Z_lift, with initial orientation)
+        success_joints, current_joints_deg, _ = self.robot.get_current_joints()
+        if not success_joints:
+            print("  Error: Failed to get current joint positions.")
+            return False
+        print(f"  2. Current joints (deg): {np.round(current_joints_deg, 2).tolist()}")
+
+        # 3. Prepare target joint array for J6 orientation
+        target_joints_deg = np.array(current_joints_deg) # Make a copy
+        
+        # Normalize target_j6_deg to be within typical robot joint limits if necessary
+        # (e.g., -180 to 180 or -360 to 360, depending on robot's J6 range)
+        # Example: target_j6_deg = (target_j6_deg + 180) % 360 - 180
+        target_joints_deg[5] = target_j6_deg # Joint 6 is at index 5
+
+        print(f"  3. Orienting J6 to {target_j6_deg:.1f} deg. Target joints: {np.round(target_joints_deg,2).tolist()}")
+        success, _, _ = self.robot.move_j_joint(target_joints_deg, speed=20, acc=20) # Speed/acc for joint move
+        if not success:
+            print("  Error: Failed to orient Joint 6.")
+            return False
+        self.robot.wait_until_motion_complete()
+        # After this move, the TCP X,Y,Z might have slightly changed if J1-J5 weren't perfectly held by the kinematic solution.
+        # For precise downward motion, it's best to get the current TCP again.
+
+        # 4. Get current TCP pose after J6 orientation for precise linear downward move
+        success_tcp, tcp_after_j6_orientation, _ = self.robot.get_tool_pose_in_base_coords()
+        if not success_tcp:
+            print("  Error: Failed to get TCP pose after J6 orientation.")
+            return False
+        print(f"  4. TCP after J6 orient (deg): {np.round(tcp_after_j6_orientation,2).tolist()}")
+        
+        # 5. Move down to actual pick position (linearly)
+        #    Use the X, Y, Rx, Ry, Rz from tcp_after_j6_orientation, only change Z.
+        pick_pose_cartesian = [tcp_after_j6_orientation[0], tcp_after_j6_orientation[1], self.PICK_Z_CONVEYOR,
+                               tcp_after_j6_orientation[3], tcp_after_j6_orientation[4], tcp_after_j6_orientation[5]]
+        print(f"  5. Moving down to pick (Cartesian): {pick_pose_cartesian}")
+        success, _, _ = self.robot.move_l_pose(np.array(pick_pose_cartesian), speed=10, acc=10) # Slower for precision
+        if not success:
+            print("  Error: Failed to move to actual pick pose.")
+            return False
+        self.robot.wait_until_motion_complete()
+
+        # 6. Close gripper
+        print("  6. Closing gripper.")
+        self.robot.close_gripper()
+        time.sleep(0.7)
+
+        # 7. Lift the object (linearly)
+        #    Use the X, Y, Rx, Ry, Rz from the pick pose, only change Z.
+        lift_pose_cartesian = [tcp_after_j6_orientation[0], tcp_after_j6_orientation[1], self.LIFT_Z_COMMON,
+                               tcp_after_j6_orientation[3], tcp_after_j6_orientation[4], tcp_after_j6_orientation[5]]
+        print(f"  7. Lifting object (Cartesian): {lift_pose_cartesian}")
+        success, _, _ = self.robot.move_l_pose(np.array(lift_pose_cartesian), speed=20, acc=20)
+        if not success:
+            print("  Error: Failed to lift object.")
+            return False
+        self.robot.wait_until_motion_complete()
+
+        print("  Pick sequence successfully completed.")
+        return True
+      
     
     def pick_and_place(self):
         if not self.object_detected:
             print("[PICK_AND_PLACE] No object detected to pick and place.")
-            return
-    
-        print(f"[PICK_AND_PLACE] Target: X={self.target_x:.1f}, Y={self.target_y:.1f}, Angle: {self.piece_angle:.1f}")
-    
-        pick_z = -33       
-        lift_z = -150      
-        drop_y = 470       
-        drop_x_offset = 0 
-        
-        # Gripper orientation:
-        # TODO: Convert self.piece_angle (camera's view) to robot's Rz
-        # This mapping is critical and depends on your coordinate system alignments.
-        # For example, if robot's Rz=0 means gripper along robot's X-axis,
-        # and camera's detected_angle=0 means piece's long side along camera's X-axis,
-        # and camera's X-axis is aligned with robot's X-axis, then:
-        # target_robot_rz = self.piece_angle
-        # The previous fixed value was rz_orientation = 91.0
-        rx_fixed, ry_fixed = -0.584, -1.702 
-        target_robot_rz = 91.0 # Placeholder - MAKE THIS DYNAMIC based on self.piece_angle
+            return # Or return False
 
-        approach_pose = [self.target_x, self.target_y, lift_z, rx_fixed, ry_fixed, target_robot_rz]
-        print(f"Moving to approach pose: {approach_pose}")
-        self.robot.move_l_pose(np.array(approach_pose), speed=30, acc=30) 
-        self.robot.wait_until_motion_complete()
+        # self.target_x, self.target_y, and self.target_j6_deg are set by map_camara2robot
+        print(f"[PICK_AND_PLACE] Initiating pick for object at X={self.target_x:.1f}, Y={self.target_y:.1f} (J6 target: {self.target_j6_deg:.1f} deg)")
 
-        pick_pose = [self.target_x, self.target_y, pick_z, rx_fixed, ry_fixed, target_robot_rz]
-        print(f"Moving to pick pose: {pick_pose}")
-        self.robot.move_l_pose(np.array(pick_pose), speed=20, acc=20)
-        self.robot.wait_until_motion_complete()
+        # Call the revised pick helper function
+        pick_successful = self._pick_from_conveyor(self.target_x, self.target_y, self.target_j6_deg)
 
-        print("Closing gripper.")
-        self.robot.close_gripper() 
-        time.sleep(0.5)
+        if not pick_successful:
+            print("[PICK_AND_PLACE] Pick operation failed. Aborting.")
+            self.object_detected = False # Reset flag
+            return # Or return False
 
-        lift_pose = [self.target_x, self.target_y, lift_z, rx_fixed, ry_fixed, target_robot_rz]
-        print(f"Moving to lift pose: {lift_pose}")
-        self.robot.move_l_pose(np.array(lift_pose), speed=20, acc=20)
-        self.robot.wait_until_motion_complete()
-
-        drop_approach_pose = [self.target_x + drop_x_offset, drop_y, lift_z, rx_fixed, ry_fixed, target_robot_rz] 
-        print(f"Moving to drop approach pose: {drop_approach_pose}")
-        self.robot.move_l_pose(np.array(drop_approach_pose), speed=30, acc=30)
-        self.robot.wait_until_motion_complete()
-        
-        print("Opening gripper.")
-        self.robot.open_gripper() 
-        time.sleep(0.5)
-
-        print(f"[PICK_AND_PLACE] Sequence complete for object at X={self.target_x:.1f}, Y={self.target_y:.1f}")
         self.object_detected = False 
-        self.piece_num +=1
+        self.piece_num += 1 
+        print("[PICK_AND_PLACE] Pick successful. Placement logic to follow.")
+        return
    
     def run(self):
         """Main execution loop for the robot."""
