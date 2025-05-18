@@ -41,6 +41,26 @@ class PalletizingRobot:
         
         self.NOMINAL_RX_DEG = -0.584
         self.NOMINAL_RY_DEG = -1.702
+        
+        self.ANGLE_CLASSIFICATION_THRESHOLD_DEG = 20.0
+
+        self.piece_count_zone_0_deg = 0
+        self.piece_count_zone_90_deg = 0
+
+        # Base ROBOT CARTESIAN coordinates for palletizing zones (mm and degrees)
+        self.PALLET_ZONE_0_BASE_X = 300.0  # Robot X for corner/start of zone 0
+        self.PALLET_ZONE_0_BASE_Y = -200.0 # Robot Y for corner/start of zone 0
+        self.PALLET_ZONE_0_PLACE_RZ_DEG = 0.0 # Desired Robot Rz on pallet for 0-deg type pieces
+
+        self.PALLET_ZONE_90_BASE_X = 300.0  # Robot X for corner/start of zone 90
+        self.PALLET_ZONE_90_BASE_Y = 200.0  # Robot Y for corner/start of zone 90
+        self.PALLET_ZONE_90_PLACE_RZ_DEG = 90.0 # Desired Robot Rz on pallet for 90-deg type pieces
+
+        # Mosaic parameters (dimensions in mm)
+        self.ITEMS_PER_ROW = 3 # Example: 3 items per row on pallet
+        self.PHYSICAL_WIDTH_MM = 90.0  # Physical shorter side of the piece (mm)
+        self.PHYSICAL_HEIGHT_MM = 140.0 # Physical longer side of the piece (mm)
+        self.ITEM_GAP_MM = 5.0 # Gap between items on pallet
 
         self.gray_thresh = gray_thresh
         self.area_thresh = area_thresh
@@ -163,16 +183,48 @@ class PalletizingRobot:
         print(f"[MAP] CamInput: u={u_cam_px}, v={v_cam_px}")
         print(f"[MAP] Robot Target → X={self.target_x:.1f} mm, Y={self.target_y:.1f} mm, Angle (cam): {self.piece_angle:.1f}°, Target Rz (rob): {self.target_j6_deg:.1f}°")
 
-    def mozaic_generator(self):
+    def mozaic_generator(self, zone_type, piece_index_in_zone):
         """
-        TODO:
-        [INCOMPLETE FUNCTION]: It should generate the position of where the
-        piece will be placed in the pallet.
+        Calculates target ROBOT CARTESIAN pose (X, Y, Z, Rz) for placing a piece.
+        Returns: (target_x, target_y, target_z, target_rz_on_pallet_deg) or None
         """
-        # hint: do it with self.piece_num
+        print(f"Mozaic generator for zone: {zone_type}, piece index: {piece_index_in_zone}")
         
-        print("Mosaic generator called - currently a placeholder.")
-        return None 
+        target_x, target_y, target_rz_on_pallet_deg = None, None, None
+        target_z = self.PLACE_Z_ON_PALLET # Z is fixed for placing on this layer
+
+        col = piece_index_in_zone % self.ITEMS_PER_ROW
+        row = piece_index_in_zone // self.ITEMS_PER_ROW
+
+        if zone_type == "0_deg_type":
+            base_x = self.PALLET_ZONE_0_BASE_X
+            base_y = self.PALLET_ZONE_0_BASE_Y
+            target_rz_on_pallet_deg = self.PALLET_ZONE_0_PLACE_RZ_DEG
+            # Assuming for 0-deg type, PHYSICAL_WIDTH_MM aligns with X-spacing, PHYSICAL_HEIGHT_MM with Y-spacing
+            spacing_x = self.PHYSICAL_WIDTH_MM + self.ITEM_GAP_MM
+            spacing_y = self.PHYSICAL_HEIGHT_MM + self.ITEM_GAP_MM
+        elif zone_type == "90_deg_type":
+            base_x = self.PALLET_ZONE_90_BASE_X
+            base_y = self.PALLET_ZONE_90_BASE_Y
+            target_rz_on_pallet_deg = self.PALLET_ZONE_90_PLACE_RZ_DEG
+            # Assuming for 90-deg type, PHYSICAL_HEIGHT_MM aligns with X-spacing (piece is rotated)
+            spacing_x = self.PHYSICAL_HEIGHT_MM + self.ITEM_GAP_MM
+            spacing_y = self.PHYSICAL_WIDTH_MM + self.ITEM_GAP_MM
+        else:
+            print(f"Error: Unknown zone_type '{zone_type}' in mozaic_generator.")
+            return None, None, None, None
+
+        target_x = base_x + col * spacing_x
+        target_y = base_y + row * spacing_y
+            
+        # TODO: Implement logic to check if pallet zone is full based on rows/cols capacity
+        # max_rows = 2 # Example
+        # if row >= max_rows:
+        #    print(f"Pallet zone {zone_type} is full.")
+        #    return None, None, None, None
+            
+        print(f"  Mosaic for {zone_type}, Idx {piece_index_in_zone}: Col {col}, Row {row} -> X {target_x:.1f}, Y {target_y:.1f}, Z {target_z:.1f}, RzPlt {target_rz_on_pallet_deg:.1f}")
+        return target_x, target_y, target_z, target_rz_on_pallet_deg
 
     def _pick_from_conveyor(self, pick_x, pick_y, target_j6_deg):
         """
