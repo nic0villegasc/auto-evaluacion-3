@@ -35,8 +35,11 @@ class PalletizingRobot:
         # Affine transformation coefficients for Y-coordinate
         # Y_robot = Y_MAPPING_SLOPE * y_cam_pixel + Y_MAPPING_INTERCEPT
         # TODO: Need to calibrate these values!
-        self.Y_MAPPING_SLOPE = -171.2613636  # Placeholder - CALIBRATE THIS: Y_MAPPING_SLOPE = (RobotY2 - RobotY1) / (v2 - v1)
-        self.Y_MAPPING_INTERCEPT = -7.868 # Placeholder - CALIBRATE THIS: Y_MAPPING_INTERCEPT = RobotY1 - Y_MAPPING_SLOPE * v1
+        self.Y_MAPPING_SLOPE = -0.1713  # Placeholder - CALIBRATE THIS: Y_MAPPING_SLOPE = (RobotY2 - RobotY1) / (v2 - v1)
+        self.Y_MAPPING_INTERCEPT = -8 # Placeholder - CALIBRATE THIS: Y_MAPPING_INTERCEPT = RobotY1 - Y_MAPPING_SLOPE * v1
+        
+        self.ANG_MAPPING_SLOPE = 0.9294
+        self.ANG_MAPPING_INTERCEPT = 83
         
         self.PICK_Z_CONVEYOR = -33.0      # Actual Z height for picking from conveyor
         self.LIFT_Z_COMMON = -150.0       # Common Z height for approach, lift, and retreat
@@ -182,12 +185,12 @@ class PalletizingRobot:
         self.target_x = Xr
         self.target_y = Yr
         self.piece_angle = detected_angle
-        self.target_j6_deg = self.piece_angle + 180.0
+        self.target_j6_deg = self.ANG_MAPPING_SLOPE * detected_angle + self.ANG_MAPPING_INTERCEPT
         
         self.object_detected = True
         
         print(f"[MAP] CamInput: u={u_cam_px}, v={v_cam_px}")
-        print(f"[MAP] Robot Target → X={self.target_x:.1f} mm, Y={self.target_y:.1f} mm, Angle (cam): {self.piece_angle:.1f}°, Target Rz (rob): {self.target_j6_deg:.1f}°")
+        print(f"[MAP] Robot Target → X={self.target_x:.1f} mm, Y={self.target_y:.1f} mm, Angle (cam): {self.piece_angle:.1f}°, Target j6 (rob): {self.target_j6_deg:.1f}°")
 
     def mozaic_generator(self, zone_type, piece_index_in_zone):
         """
