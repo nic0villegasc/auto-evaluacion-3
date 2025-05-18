@@ -186,9 +186,6 @@ class PalletizingRobot:
         return None
     
     def pick_and_place(self):
-        if not self.object_detected:
-            return
-
         self.robot.open_gripper()
         self.robot.wait_until_motion_complete()
         
@@ -196,6 +193,11 @@ class PalletizingRobot:
         print("[INFO] Moviendo al origen seguro antes de iniciar pick and place...")
         self.robot.move_l_pose(np.array(origin_pose), speed=20, acc=20)
         self.robot.wait_until_motion_complete()
+
+        if not self.object_detected:
+            return
+
+        
 
         print("roberto come caca")
         print(f"[PICK_AND_PLACE] Ángulo detectado = {self.detected_angle:.1f}°")
