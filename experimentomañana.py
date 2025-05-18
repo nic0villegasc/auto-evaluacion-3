@@ -204,7 +204,7 @@ class PalletizingRobot:
         print(f"[INFO] Width: {self.detected_width:.1f}, Height: {self.detected_height:.1f}")
 
         # CASO 180 GRADOS (horizontal)
-        if -10 <= self.detected_angle <= 10 and self.detected_width < self.detected_height:
+        if self.detected_width < self.detected_height:
             print("[INFO] El bloque está orientado en 0 grados (horizontal). Ejecutando flujo en X.")
             # Coordenadas fijas excepto X
             fixed_y = 0         # posición fija en Y
@@ -255,7 +255,7 @@ class PalletizingRobot:
             #self.robot.move_l_pose(np.array(vuelta),speed=20, acc=20)
 
         # CASO 90 GRADOS (vertical)
-        elif 80 <= self.detected_angle <= 100 and self.detected_height < self.detected_width:
+        elif self.detected_height < self.detected_width:
             print("[INFO] El bloque está orientado en 90 grados (vertical). Ejecutando flujo en Y.")
             # Coordenadas fijas excepto Y
             fixed_x = 0         # posición fija en X
