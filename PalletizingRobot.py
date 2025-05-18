@@ -32,7 +32,7 @@ class PalletizingRobot:
         # Affine transformation coefficients for X-coordinate
         # X_robot = X_MAPPING_SLOPE * x_cam_pixel + X_MAPPING_INTERCEPT
         self.X_MAPPING_SLOPE = 0.5208
-        self.X_MAPPING_INTERCEPT = -132.57
+        self.X_MAPPING_INTERCEPT = -148.57
 
         # Affine transformation coefficients for Y-coordinate
         # Y_robot = Y_MAPPING_SLOPE * y_cam_pixel + Y_MAPPING_INTERCEPT
@@ -40,7 +40,7 @@ class PalletizingRobot:
         self.Y_MAPPING_INTERCEPT = -8
         
         self.ANG_MAPPING_SLOPE = 0.9294
-        self.ANG_MAPPING_INTERCEPT = 83
+        self.ANG_MAPPING_INTERCEPT = 86
         
         self.PICK_Z_CONVEYOR = -33.0      # Actual Z height for picking from conveyor
         self.LIFT_Z_COMMON = -150.0       # Common Z height for approach, lift, and retreat
