@@ -446,7 +446,7 @@ class PalletizingRobot:
         # (e.g., -90 to +90, or 0 to 180 after adjustments in detect_box).
 
         # Check for 0-degree type orientation
-        if abs(piece_angle_from_camera) < self.ANGLE_CLASSIFICATION_THRESHOLD_DEG:
+        if abs(piece_angle_from_camera) < self.ANGLE_CLASSIFICATION_THRESHOLD_DEG or abs(piece_angle_from_camera) < self.ANGLE_CLASSIFICATION_THRESHOLD_DEG + 180:
             return "0_deg_type"
         # Check for 90-degree type orientation (handles +90 and -90)
         # The logic abs(abs(angle) - 90) handles angles like -85 or +95 correctly as 90-type.
