@@ -46,7 +46,7 @@ class PalletizingRobot:
         
         self.PICK_Z_CONVEYOR = -33.0      # Actual Z height for picking from conveyor
         self.LIFT_Z_COMMON = -150.0       # Common Z height for approach, lift, and retreat
-        self.PLACE_Z_PALLET_SURFACE = 63
+        self.PLACE_Z_PALLET_SURFACE = 70
         
         self.NOMINAL_RX_DEG = -0.584
         self.NOMINAL_RY_DEG = -1.702
@@ -78,7 +78,7 @@ class PalletizingRobot:
         self.PHYSICAL_THICKNESS_MM = 95.0
         self.ITEM_GAP_MM = 30.0 # Gap between items on pallet
         
-        self.BASE_Z_FOR_FIRST_LAYER = self.PLACE_Z_PALLET_SURFACE + self.PHYSICAL_THICKNESS_MM / 2.0
+        self.BASE_Z_FOR_FIRST_LAYER = self.PLACE_Z_PALLET_SURFACE - self.PHYSICAL_THICKNESS_MM / 2.0
         
         self.PALLET_PRIMARY_RZ_DEG = 0.0
         self.PALLET_SECONDARY_RZ_DEG = 90.0
