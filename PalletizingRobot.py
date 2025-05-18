@@ -219,8 +219,6 @@ class PalletizingRobot:
                 f"CamAngle={object_data_for_queue['piece_angle']:.1f}°, "
                 f"RobJ6Target={object_data_for_queue['target_j6_deg']:.1f}°")
           print(f"    Current queue size: {self.object_queue.qsize()}")
-          
-          self._wait_for_step_confirmation(f"Camera data")
         
         except queue.Full:
           print(f"[MAP & QUEUE] CRITICAL WARNING: Object queue is full. "
@@ -723,7 +721,7 @@ if __name__ == "__main__":
     robot_ip = "169.168.0.200" # Replace with your robot's IP
 
     robot_controller = PalletizingRobot(robot_ip,
-                                        step_mode=False) 
+                                        step_mode=True) 
     
     print("Initializing camera...")
     robot_controller.initialize_camera()
