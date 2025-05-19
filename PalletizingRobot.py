@@ -52,8 +52,8 @@ class PalletizingRobot:
         self.NOMINAL_RY_DEG = -1.702
         self.NOMINAL_RZ_DEG = 91.0
         
-        self.FIXED_RX_DEG = self.NOMINAL_RX_DEG  # TODO: Place holder
-        self.FIXED_RY_DEG = self.NOMINAL_RY_DEG  # TODO: Place holder
+        self.FIXED_RX_DEG = self.NOMINAL_RX_DEG
+        self.FIXED_RY_DEG = self.NOMINAL_RY_DEG
         
         self.ANGLE_CLASSIFICATION_THRESHOLD_DEG = 20.0
 
@@ -102,8 +102,8 @@ class PalletizingRobot:
             "reject_bin":{
               "coords": [-415, 142, -144, self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, self.NOMINAL_RZ_DEG],
                 "description": "initial neutral pose above conveyor (X=0, Y=0)",
-                "speed": 60, 
-                "acc": 30
+                "speed": 30, 
+                "acc": 20
             }
         }
         
