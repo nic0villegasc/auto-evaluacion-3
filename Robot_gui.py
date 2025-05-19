@@ -17,7 +17,7 @@ class RobotApp:
 
         tk.Label(master, text="IP del Robot:").grid(row=0, column=0, padx=10, pady=5, sticky="e")
         self.ip_entry = tk.Entry(master, width=30)
-        self.ip_entry.insert(0, "192.168.1.100")
+        self.ip_entry.insert(0, "169.168.0.200")
         self.ip_entry.grid(row=0, column=1, padx=10, pady=5)
 
         self.sensor_status_btn = tk.Button(master, text="Estado del Sensor", bg="gray", command=self.actualizar_estado_sensor)
