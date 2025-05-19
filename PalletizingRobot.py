@@ -7,7 +7,15 @@ from CameraCalibration import CameraCalibrationHelper
 import threading
 import math
 import queue
+import logging
 
+
+logging.basicConfig(
+    filename="robot_errors.log",
+    filemode="a",  # "w" si quieres sobreescribir cada vez
+    level=logging.ERROR,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 class PalletizingRobot:
 
     def __init__(self, robot_ip, gray_thresh = 100, area_thresh = 45000, 
@@ -124,6 +132,7 @@ class PalletizingRobot:
         and displaying the camera feed.
         """
         if not self.camera_available:
+            logging.error(f"[CONNECT] Falló la conexión con {self.camera_available}")
             print("Camera not available. Exiting camera thread.")
             return
 
@@ -171,6 +180,7 @@ class PalletizingRobot:
                         # The currently detected object is significantly different from the
                         # one previously considered active. This implies the old one left and this is new.
                         should_queue_object = True
+                        
                         print(f"[CAMERA_THREAD] Detected object is different from previous active. Queuing. New: {current_detected_props}, Prev Active: {last_active_props}")
                     # else: Properties are similar to the active object. It's likely the same one,
                     #       still in view (even if stationary). Do NOT re-queue.
@@ -184,6 +194,7 @@ class PalletizingRobot:
                 if self.active_object_props_in_view is not None:
                     # An object *was* active, but is now no longer seen.
                     # This means it has left the view, so clear the active state.
+                    logging.error(f"[CAMERA_THREAD] Active object ({self.active_object_props_in_view}) no longer detected. Clearing active state.")
                     print(f"[CAMERA_THREAD] Active object ({self.active_object_props_in_view}) no longer detected. Clearing active state.")
                     self.active_object_props_in_view = None
                 # else: No object was active, and still no object detected. Nothing to do.
