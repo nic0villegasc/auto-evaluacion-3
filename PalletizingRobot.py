@@ -768,7 +768,10 @@ class PalletizingRobot:
                         
                   if success_read:
                     print(f"[RUN] Set virtual output: 799")
-                    var = not var
+                    if var:
+                      var = 0
+                    else:
+                      var = 1
 
                   elif not success_read:
                     print(f"[RUN] Warning: Failed to read virtual output at address {799}.")
