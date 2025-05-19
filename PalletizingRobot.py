@@ -764,11 +764,11 @@ class PalletizingRobot:
                 var = 1
                   
                 while 1:
-                  success_read, cinta_value_str, _ = self.robot.send_cmd("setVirtualOutput", {"addr": 799,"status": var})
+                  success_read, cinta_value_str, _ = self.robot.send_cmd("setVirtualOutput", {"addr": 799, "status": var})
                         
                   if success_read:
                     print(f"[RUN] Set virtual output: 799")
-                    var != var
+                    var = not var
 
                   elif not success_read:
                     print(f"[RUN] Warning: Failed to read virtual output at address {799}.")
