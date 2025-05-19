@@ -37,12 +37,39 @@ class RobotApp:
         self.status_label.grid(row=6, column=0, columnspan=2, sticky="we", padx=5, pady=10)
 
         self.actualizar_estado_sensor_periodicamente()
+        # Ventana de estado
+        estado_frame = tk.LabelFrame(master, text="Estado del robot", padx=10, pady=10)
+        estado_frame.grid(row=7, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
+
+        self.label_sensor = tk.Label(estado_frame, text="Sensor: ---", anchor="w")
+        self.label_sensor.pack(fill="x")
+
+        self.label_gripper = tk.Label(estado_frame, text="Gripper: ---", anchor="w")
+        self.label_gripper.pack(fill="x")
+
+        self.label_queue = tk.Label(estado_frame, text="Objetos en cola: ---", anchor="w")
+        self.label_queue.pack(fill="x")
+        self.actualizar_estado_robot()
+
 
     def actualizar_estado_sensor(self):
         if self.robot and self.robot.object_detected:
             self.sensor_status_btn.configure(bg="green", text="Objeto Detectado")
         else:
             self.sensor_status_btn.configure(bg="red", text="Sin Objeto")
+
+    def actualizar_estado_robot(self):
+        if self.robot:
+            sensor_estado = "Detectado" if self.robot.object_detected else "No detectado"
+            gripper_estado = "Activado" if getattr(self.robot, "gripper_closed", False) else "Desactivado"
+            queue_len = self.robot.object_queue.qsize() if self.robot.object_queue else 0
+
+            self.label_sensor.config(text=f"Sensor: {sensor_estado}")
+            self.label_gripper.config(text=f"Gripper: {gripper_estado}")
+            self.label_queue.config(text=f"Objetos en cola: {queue_len}")
+        
+        self.master.after(1000, self.actualizar_estado_robot)
+
 
     def actualizar_estado_sensor_periodicamente(self):
         self.actualizar_estado_sensor()
