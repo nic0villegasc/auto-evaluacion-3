@@ -385,7 +385,7 @@ class PalletizingRobot:
         print(f"  Zone {zone_type}, Z-Layer {current_z_layer_index} (X-offset): Piece in pair {index_within_pair}, j6={target_j6_on_pallet_deg} deg")
 
         
-        if current_z_layer_index >= self.MAX_Z_LAYERS_PER_ZONE:
+        if current_z_layer_index >= self.MAX_Z_LAYERS_PER_ZONE or True:
             print(f"Error: Pallet zone '{zone_type}' is full. Max Z-layers ({self.MAX_Z_LAYERS_PER_ZONE}) reached.")
             return None, None, None, None
         
