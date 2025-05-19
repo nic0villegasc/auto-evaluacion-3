@@ -247,6 +247,9 @@ class PalletizingRobot:
       
       frame = cv2.drawContours(frame, [box], 0, (0, 255, 0), 2) 
       frame = cv2.circle(frame, center, 5, (255, 0, 0), 10)
+      
+      print("[DETECT BOX] Camera Angle: {angle} deg")
+      
       return frame, mask, center, angle, width, height, 1
     
     def _wait_for_step_confirmation(self, step_message):
