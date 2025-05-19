@@ -519,7 +519,7 @@ class PalletizingRobot:
     
     def _wait_for_step_confirmation(self, step_message):
         """ If step-by-step mode is enabled, prints a message and waits for Enter key. """
-        if self.step_by_step_enabled:
+        if True:
             input(f"--- PAUSED: {step_message} --- Press Enter to continue...")
     
     def pick_and_place(self):
