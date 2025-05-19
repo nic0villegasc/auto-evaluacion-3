@@ -580,7 +580,7 @@ class PalletizingRobot:
             self.robot.close_gripper()
             self.robot.move_l_pose(np.array(vuelta), speed=20, acc=20)
             self.count_0 += 1
-            if self.count_0 == 10
+            if self.count_0 == 10:
                 print("SACAR PALLETS")
                 self.count_0 == 1
             else:
@@ -633,7 +633,7 @@ class PalletizingRobot:
             self.robot.close_gripper()
             self.robot.move_l_pose(np.array(vuelta), speed=20, acc=20)
             self.count_90 += 1
-            if self.count_90 == 10
+            if self.count_90 == 10:
                 print("SACAR PALLETS")
                 self.count_90 == 1
             else:
