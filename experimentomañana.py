@@ -105,9 +105,6 @@ class PalletizingRobot:
         center, (width, height), angle = rect
         
         
-        if width < height:
-            angle += 90
-        
         self.detected_width = width
         self.detected_height = height
         self.detected_angle = angle
@@ -181,7 +178,6 @@ class PalletizingRobot:
     def mozaic_generator(self,angle,count):
         pointhigh = [206.058,507.878,-400,-1.480,3.181,-92.352]
         if self.detected_width < self.detected_height:
-            print(count)
             if count < 4:
                 if count == 1:
                     blokmos1= [80.158,507.878,49.5,-1.480,3.181,-92.352]
@@ -236,7 +232,6 @@ class PalletizingRobot:
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
             elif count < 7:
-                z=-53.653
                 if count == 4:
                     blokmos1= [80.158,507.878,-53.653,-1.480,3.181,-92.352]
                     blokmos1safe= [80.158,538.505,-300,-1.486,3.203,-92.353]
@@ -290,7 +285,6 @@ class PalletizingRobot:
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
             elif count < 10 :
-                z = -147.364
                 if count == 7:
                     blokmos11= [80.158,507.878,-147.364,-1.480,3.181,-92.352]
                     blokmos11safe= [80.158,538.505,-300,-1.486,3.203,-92.353]
@@ -345,8 +339,6 @@ class PalletizingRobot:
                     self.robot.wait_until_motion_complete()
                     self.count_90 = 1
         elif self.detected_height < self.detected_width:
-            x=581.905
-            print(count)
             if count < 4:
                 if count == 1:
                     blokmos1= [565.558,507.878,39.5,-1.480,3.181,-92.352]
@@ -401,7 +393,6 @@ class PalletizingRobot:
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
             elif count < 7:
-                z=-53.653
                 if count == 4:
                     blokmos1= [565.558,507.878,-53.653,-1.480,3.181,-92.352]
                     blokmos1safe= [565.558,538.505,-300,-1.486,3.203,-92.353]
@@ -455,7 +446,6 @@ class PalletizingRobot:
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
             elif count < 10 :
-                z = -147.364
                 if count == 7:
                     blokmos1= [565.558,507.878,-147.364,-1.480,3.181,-92.352]
                     blokmos1safe= [565.558,538.505,-300,-1.486,3.203,-92.353]
@@ -524,9 +514,6 @@ class PalletizingRobot:
 
         if not self.object_detected:
             return
-
-        count_noventa = 0
-        count_cero = 0
 
         
         print(f"[PICK_AND_PLACE] Ángulo detectado = {self.detected_angle:.1f}°")
