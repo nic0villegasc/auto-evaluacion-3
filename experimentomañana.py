@@ -41,6 +41,8 @@ class PalletizingRobot:
         self.cam_min_lim = cam_min_lim
         self.cam_max_lim = cam_max_lim
         self.detected_angle=0.0
+        self.count_90 = 1  # Contador para bloques verticales (90°)
+        self.count_0 = 1   # Contador para bloques horizontales (0°)
         
     def initialize_camera(self):
         self.helper = CameraCalibrationHelper()
@@ -135,7 +137,7 @@ class PalletizingRobot:
         print(f"[MAP] Robot → X={Xr:.1f} mm, Y={Yr:.1f} mm")
         
         
-        #caca
+        
         
         # Dibujar en pantalla
     
@@ -176,13 +178,335 @@ class PalletizingRobot:
         self.robot_angle = None
         
 
-    def mozaic_generator(self):
-        """
-        [INCOMPLETE FUNCTION]: It should generate the position of where the
-        piece will be placed in the pallet.
-        """
-        # hint: do it with self.piece_num
+    def mozaic_generator(self,angle,count):
+        pointhigh = [206.058,507.878,-300,-1.480,3.181,-92.352]
+        if angle == 90:
+            if count < 4:
+                if count == 1:
+                    blokmos1= [80.158,507.878,39.5,-1.480,3.181,-92.352]
+                    blokmos1safe= [80.158,538.505,-300,-1.486,3.203,-92.353]
+                    
 
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+
+                elif count == 2:
+                    blokmos2= [206.058,507.878,39.5,-1.480,3.181,-92.352]
+                    blokmos2safe= [206.058,507.878,-300,-1.480,3.181,-92.352]
+                    
+                
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                elif count == 3:
+                    blokmos3= [335.130,507.878,39.5,-1.480,3.181,-92.352]
+                    blokmos3safe= [335.130,507.878,-300,-1.480,3.181,-92.352]
+                    
+                
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+            elif count < 7:
+                z=-53.653
+                if count == 4:
+                    blokmos1= [80.158,507.878,-53.653,-1.480,3.181,-92.352]
+                    blokmos1safe= [80.158,538.505,-300,-1.486,3.203,-92.353]
+                    
+
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+
+                elif count == 5:
+                    blokmos2= [206.058,507.878,-53.653,-1.480,3.181,-92.352]
+                    blokmos2safe= [206.058,507.878,-300,-1.480,3.181,-92.352]
+                    
+                
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                elif count == 6:
+                    blokmos3= [335.130,507.878,-53.653,-1.480,3.181,-92.352]
+                    blokmos3safe= [335.130,507.878,-300,-1.480,3.181,-92.352]
+                    
+                
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+            elif count < 10 :
+                z = -147.364
+                if count == 7:
+                    blokmos1= [80.158,507.878,-147.364,-1.480,3.181,-92.352]
+                    blokmos1safe= [80.158,538.505,-300,-1.486,3.203,-92.353]
+                    
+
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+
+                elif count == 8:
+                    blokmos2= [206.058,507.878,-147.364,-1.480,3.181,-92.352]
+                    blokmos2safe= [206.058,507.878,-300,-1.480,3.181,-92.352]
+                    
+                
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                elif count == 9:
+                    blokmos3= [335.130,507.878,-147.364,-1.480,3.181,-92.352]
+                    blokmos3safe= [335.130,507.878,-300,-1.480,3.181,-92.352]
+                    
+                
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+        elif angle == 0:
+            x=581.905
+            if count < 4:
+                if count == 1:
+                    blokmos1= [80.158,507.878,39.5,-1.480,3.181,-92.352]
+                    blokmos1safe= [80.158,538.505,-300,-1.486,3.203,-92.353]
+                    
+
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+
+                elif count == 2:
+                    blokmos2= [206.058,507.878,39.5,-1.480,3.181,-92.352]
+                    blokmos2safe= [206.058,507.878,-300,-1.480,3.181,-92.352]
+                    
+                
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                elif count == 3:
+                    blokmos3= [335.130,507.878,39.5,-1.480,3.181,-92.352]
+                    blokmos3safe= [335.130,507.878,-300,-1.480,3.181,-92.352]
+                    
+                
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+            elif count < 7:
+                z=-53.653
+                if count == 4:
+                    blokmos1= [80.158,507.878,-53.653,-1.480,3.181,-92.352]
+                    blokmos1safe= [80.158,538.505,-300,-1.486,3.203,-92.353]
+                    
+
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+
+                elif count == 5:
+                    blokmos2= [206.058,507.878,-53.653,-1.480,3.181,-92.352]
+                    blokmos2safe= [206.058,507.878,-300,-1.480,3.181,-92.352]
+                    
+                
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                elif count == 6:
+                    blokmos3= [335.130,507.878,-53.653,-1.480,3.181,-92.352]
+                    blokmos3safe= [335.130,507.878,-300,-1.480,3.181,-92.352]
+                    
+                
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+            elif count < 10 :
+                z = -147.364
+                if count == 7:
+                    blokmos1= [80.158,507.878,-147.364,-1.480,3.181,-92.352]
+                    blokmos1safe= [80.158,538.505,-300,-1.486,3.203,-92.353]
+                    
+
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+
+                elif count == 8:
+                    blokmos2= [206.058,507.878,-147.364,-1.480,3.181,-92.352]
+                    blokmos2safe= [206.058,507.878,-300,-1.480,3.181,-92.352]
+                    
+                
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos2safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                elif count == 9:
+                    blokmos3= [335.130,507.878,-147.364,-1.480,3.181,-92.352]
+                    blokmos3safe= [335.130,507.878,-300,-1.480,3.181,-92.352]
+                    
+                
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.open_gripper()
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(blokmos3safe), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.wait_until_motion_complete()
+        else:
+            return
         return None
     
     def pick_and_place(self):
@@ -197,15 +521,18 @@ class PalletizingRobot:
         if not self.object_detected:
             return
 
-        
+        count_noventa = 0
+        count_cero = 0
 
-        print("roberto come caca")
+        
         print(f"[PICK_AND_PLACE] Ángulo detectado = {self.detected_angle:.1f}°")
         print(f"[INFO] Width: {self.detected_width:.1f}, Height: {self.detected_height:.1f}")
 
         # CASO 180 GRADOS (horizontal)
         if self.detected_width < self.detected_height:
             print("[INFO] El bloque está orientado en 0 grados (horizontal). Ejecutando flujo en X.")
+            angulo_primario = 0
+            
             # Coordenadas fijas excepto X
             fixed_y = 0         # posición fija en Y
             fixed_z = -33       # altura segura para no tocar la cinta
@@ -224,6 +551,7 @@ class PalletizingRobot:
             levantar = [x_pose, y_pose, z_subida, rx, ry, rz]
             caida = [x_caida, y_pose, z_subida, rx, ry, 80.768]
             vuelta = [x_vuelta, y_vuelta, z_vuelta, rx, ry, rz]
+
             self.robot.open_gripper()
             self.robot.wait_until_motion_complete()
             self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
@@ -248,18 +576,21 @@ class PalletizingRobot:
             self.robot.wait_until_motion_complete()
             self.robot.move_l_pose(np.array(levantar), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
-            self.robot.move_l_pose(np.array(caida), speed=10, acc=20)
-            self.robot.wait_until_motion_complete()
-            self.robot.open_gripper()
-            self.robot.wait_until_motion_complete()
+            self.mozaic_generator(angulo_primario,self.count_0)
             self.robot.close_gripper()
             self.robot.move_l_pose(np.array(vuelta), speed=20, acc=20)
-            
+            self.count_0 += 1
+            if self.count_0 == 10
+                print("SACAR PALLETS")
+                self.count_0 == 1
+            else:
+                return
             
 
         # CASO 90 GRADOS (vertical)
         elif self.detected_height < self.detected_width:
             print("[INFO] El bloque está orientado en 90 grados (vertical). Ejecutando flujo en Y.")
+            angulo_primario = 90
             # Coordenadas fijas excepto Y
             fixed_x = 0         # posición fija en X
             fixed_z = -33       # altura segura para no tocar la cinta
@@ -298,12 +629,16 @@ class PalletizingRobot:
             self.robot.wait_until_motion_complete()
             self.robot.move_l_pose(np.array(levantar), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
-            self.robot.move_l_pose(np.array(caida), speed=10, acc=20)
-            self.robot.wait_until_motion_complete()
-            self.robot.open_gripper()
-            self.robot.wait_until_motion_complete()
+            self.mozaic_generator(angulo_primario,self.count_90)
             self.robot.close_gripper()
             self.robot.move_l_pose(np.array(vuelta), speed=20, acc=20)
+            self.count_90 += 1
+            if self.count_90 == 10
+                print("SACAR PALLETS")
+                self.count_90 == 1
+            else:
+                return
+
         else:
             print("[INFO] El bloque NO cumple condiciones para 180° ni 90°. No se ejecuta movimiento.")
             return
