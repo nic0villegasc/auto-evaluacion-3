@@ -307,6 +307,7 @@ class PalletizingRobot:
                   f"Failed to add new object. This may indicate an issue if using blocking put().")
         
         except Exception as e:
+          logging.error(f"[MAP & QUEUE] ERROR: An unexpected error occurred while adding object to queue: {e}")
           print(f"[MAP & QUEUE] ERROR: An unexpected error occurred while adding object to queue: {e}")
         
         print(f"[MAP] CamInput: u={u_cam_px}, v={v_cam_px}")
@@ -314,6 +315,7 @@ class PalletizingRobot:
 
     def _move_robot_to_standard_pose(self, pose_name, gripper_action_after_move=None):
         if pose_name not in self.STANDARD_POSES:
+            logging.error(f"[ROBOT_MOVE] ERROR: Standard pose '{pose_name}' not defined.")
             print(f"[ROBOT_MOVE] ERROR: Standard pose '{pose_name}' not defined.")
             return False
 
@@ -341,6 +343,7 @@ class PalletizingRobot:
                 time.sleep(0.7) # Allow time for gripper
             return True
         else:
+            logging.error(f"[ROBOT_MOVE] CRITICAL: Failed to move to {description}.")
             print(f"[ROBOT_MOVE] CRITICAL: Failed to move to {description}.")
             return False
 
@@ -360,6 +363,7 @@ class PalletizingRobot:
             base_center_x = self.PALLET_ZONE_90_BASE_X
             base_center_y = self.PALLET_ZONE_90_BASE_Y
         else:
+            logging.error(f"Error: Unknown zone_type '{zone_type}' in mozaic_generator.")
             print(f"Error: Unknown zone_type '{zone_type}' in mozaic_generator.")
             return None, None, None, None
 
@@ -402,6 +406,7 @@ class PalletizingRobot:
         self._wait_for_step_confirmation(f"Moving to approach pick pose: {np.round(approach_pose_cartesian,1).tolist()}")
         success, _, _ = self.robot.move_l_pose(np.array(approach_pose_cartesian), speed=40, acc=30)
         if not success:
+            logging.error("  Error: Failed to move to Cartesian approach pose.")
             print("  Error: Failed to move to Cartesian approach pose.")
             return False
         self.robot.wait_until_motion_complete()
@@ -439,6 +444,7 @@ class PalletizingRobot:
         self._wait_for_step_confirmation(f"Moving down to pick (Cartesian): {np.round(pick_pose_cartesian_final,1).tolist()}")
         success, _, _ = self.robot.move_l_pose(np.array(pick_pose_cartesian_final), speed=10, acc=60, dec=30)
         if not success: 
+            logging.error("  Error: Failed to move to actual pick pose.")
             print("  Error: Failed to move to actual pick pose.")
             return False
         self.robot.wait_until_motion_complete()
@@ -454,6 +460,7 @@ class PalletizingRobot:
         self._wait_for_step_confirmation(f"Lifting object (Cartesian): {np.round(lift_pose_cartesian_final,1).tolist()}")
         success, _, _ = self.robot.move_l_pose(np.array(lift_pose_cartesian_final), speed=20, acc=30, dec=60)
         if not success:
+            logging.error("  Error: Failed to lift object.")
             print("  Error: Failed to lift object.")
             return False
         self.robot.wait_until_motion_complete()
