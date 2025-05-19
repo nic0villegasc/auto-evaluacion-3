@@ -855,7 +855,7 @@ if __name__ == "__main__":
     robot_ip = "169.168.0.200" # Replace with your robot's IP
 
     robot_controller = PalletizingRobot(robot_ip,
-                                        step_mode=True) 
+                                        step_mode=False) 
     
     print("Initializing camera...")
     robot_controller.initialize_camera()
