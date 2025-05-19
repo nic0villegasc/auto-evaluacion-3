@@ -135,7 +135,7 @@ class PalletizingRobot:
         print(f"[MAP] Robot → X={Xr:.1f} mm, Y={Yr:.1f} mm")
         
         
-        
+        #caca
         
         # Dibujar en pantalla
     
