@@ -760,6 +760,20 @@ class PalletizingRobot:
                     if cam_thread.is_alive(): # Make sure cam_thread is defined in this scope
                         cam_thread.join(timeout=5.0)
                     return # Exit the run method
+                
+                var = 1
+                  
+                while 1:
+                  success_read, cinta_value_str, _ = self.robot.send_cmd("setVirtualOutput", {"addr": 799,"status": var})
+                        
+                  if success_read:
+                    print(f"[RUN] Set virtual output: 799")
+                    var != var
+
+                  elif not success_read:
+                    print(f"[RUN] Warning: Failed to read virtual output at address {799}.")
+                  
+                  time.sleep(1)
 
                 previous_sensor_state_is_detecting = False
                 QUEUE_GET_TIMEOUT = 0.05
@@ -770,11 +784,6 @@ class PalletizingRobot:
                             print("CRITICAL: Camera thread has stopped unexpectedly. Signaling shutdown.")
                             self._stop_event.set()
                             break
-                          
-                        success_read, cinta_value_str, _ = self.robot.send_cmd("setVirtualOutput", {"addr": 799})
-                        
-                        if success_read:
-                          print(f"[RUN] Set virtual output: 799")
 
                         # Sensor reading logic
                         success_read, sensor_value_str, _ = self.robot.send_cmd("getVirtualOutput", {"addr": self.SENSOR_ADDRESS})
