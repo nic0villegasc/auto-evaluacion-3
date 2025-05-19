@@ -176,7 +176,8 @@ class PalletizingRobot:
                     #       still in view (even if stationary). Do NOT re-queue.
                 
                 if should_queue_object:
-                    self.map_camara2robot(center, angle) 
+                    print(f"[CAMERA_THREAD] Angle {angle} deg")
+                    self.map_camara2robot(center, angle)
                     self.active_object_props_in_view = current_detected_props # Set/Update the active object
 
             else: 
@@ -247,8 +248,6 @@ class PalletizingRobot:
       
       frame = cv2.drawContours(frame, [box], 0, (0, 255, 0), 2) 
       frame = cv2.circle(frame, center, 5, (255, 0, 0), 10)
-      
-      print(f"[DETECT BOX] Camera Angle: {angle} deg")
       
       return frame, mask, center, angle, width, height, 1
     
