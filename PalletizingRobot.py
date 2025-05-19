@@ -123,7 +123,6 @@ class PalletizingRobot:
             return
 
         while True:
-            current_time_monotonic = time.monotonic()
           
             frame = self.camera.capture_array()[:, :, 0:3]
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
@@ -347,7 +346,7 @@ class PalletizingRobot:
         else:
             print(f"Error: Unknown zone_type '{zone_type}' in mozaic_generator.")
             return None, None, None, None
-          
+
         current_z_layer_index = piece_index_in_zone // self.ITEMS_PER_Z_LAYER_PATTERN
         index_within_pair = piece_index_in_zone % self.ITEMS_PER_Z_LAYER_PATTERN  # Will be 0 or 1
 
