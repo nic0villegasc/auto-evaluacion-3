@@ -181,17 +181,18 @@ class PalletizingRobot:
     def mozaic_generator(self,angle,count):
         pointhigh = [206.058,507.878,-400,-1.480,3.181,-92.352]
         if angle == 90:
+            print(count)
             if count < 4:
                 if count == 1:
                     blokmos1= [80.158,507.878,49.5,-1.480,3.181,-92.352]
                     blokmos1safe= [80.158,538.505,-300,-1.486,3.203,-92.353]
                     
 
-                    self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
+                    self.robot.move_l_pose(np.array(pointhigh), speed=30, acc=20)
                     self.robot.wait_until_motion_complete()
-                    self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
+                    self.robot.move_l_pose(np.array(blokmos1safe), speed=30, acc=20)
                     self.robot.wait_until_motion_complete()
-                    self.robot.move_l_pose(np.array(blokmos1), speed=10, acc=20)
+                    self.robot.move_l_pose(np.array(blokmos1), speed=30, acc=20)
                     self.robot.wait_until_motion_complete()
                     self.robot.open_gripper()
                     self.robot.wait_until_motion_complete()
@@ -342,11 +343,13 @@ class PalletizingRobot:
                     self.robot.wait_until_motion_complete()
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
+                    self.count_90 = 1
         elif angle == 0:
             x=581.905
+            print(count)
             if count < 4:
                 if count == 1:
-                    blokmos1= [565.558,507.878,49.5,-1.480,3.181,-92.352]
+                    blokmos1= [565.558,507.878,39.5,-1.480,3.181,-92.352]
                     blokmos1safe= [565.558,538.505,-300,-1.486,3.203,-92.353]
                     
 
@@ -364,7 +367,7 @@ class PalletizingRobot:
                     self.robot.wait_until_motion_complete()
 
                 elif count == 2:
-                    blokmos2= [697.162,507.878,49.5,-1.480,3.181,-92.352]
+                    blokmos2= [697.162,507.878,39.5,-1.480,3.181,-92.352]
                     blokmos2safe= [697.162,507.878,-300,-1.480,3.181,-92.352]
                     
                 
@@ -381,7 +384,7 @@ class PalletizingRobot:
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
                 elif count == 3:
-                    blokmos3= [917.352,507.878,49.5,-1.480,3.181,-92.352]
+                    blokmos3= [917.352,507.878,39.5,-1.480,3.181,-92.352]
                     blokmos3safe= [917.352,507.878,-300,-1.480,3.181,-92.352]
                     
                 
@@ -505,6 +508,7 @@ class PalletizingRobot:
                     self.robot.wait_until_motion_complete()
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
+                    self.count_0 = 1
         else:
             return
         return None
@@ -549,7 +553,6 @@ class PalletizingRobot:
             pose = [x_pose, y_pose, z_seguro, rx, ry, rz]
             bajar = [x_pose, y_pose, fixed_z, rx, ry, rz]
             levantar = [x_pose, y_pose, z_subida, rx, ry, rz]
-            caida = [x_caida, y_pose, z_subida, rx, ry, 80.768]
             vuelta = [x_vuelta, y_vuelta, z_vuelta, rx, ry, rz]
 
             self.robot.open_gripper()
@@ -577,14 +580,11 @@ class PalletizingRobot:
             self.robot.move_l_pose(np.array(levantar), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
             self.mozaic_generator(angulo_primario,self.count_0)
+
             self.robot.close_gripper()
             self.robot.move_l_pose(np.array(vuelta), speed=20, acc=20)
             self.count_0 += 1
-            if self.count_0 == 10:
-                print("SACAR PALLETS")
-                self.count_0 == 1
-            else:
-                return
+            
             
 
         # CASO 90 GRADOS (vertical)
@@ -633,11 +633,7 @@ class PalletizingRobot:
             self.robot.close_gripper()
             self.robot.move_l_pose(np.array(vuelta), speed=20, acc=20)
             self.count_90 += 1
-            if self.count_90 == 10:
-                print("SACAR PALLETS")
-                self.count_90 == 1
-            else:
-                return
+            
 
         else:
             print("[INFO] El bloque NO cumple condiciones para 180° ni 90°. No se ejecuta movimiento.")
