@@ -180,7 +180,7 @@ class PalletizingRobot:
 
     def mozaic_generator(self,angle,count):
         pointhigh = [206.058,507.878,-400,-1.480,3.181,-92.352]
-        if angle == 90:
+        if self.detected_width < self.detected_height::
             print(count)
             if count < 4:
                 if count == 1:
@@ -344,7 +344,7 @@ class PalletizingRobot:
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
                     self.count_90 = 1
-        elif angle == 0:
+        elif self.detected_height < self.detected_width:
             x=581.905
             print(count)
             if count < 4:
