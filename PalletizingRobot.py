@@ -105,7 +105,7 @@ class PalletizingRobot:
             "reject_bin":{
               "coords": [-415, 142, -144, self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, self.NOMINAL_RZ_DEG],
                 "description": "initial neutral pose above conveyor (X=0, Y=0)",
-                "speed": 30, 
+                "speed": 50, 
                 "acc": 20
             }
         }
@@ -402,7 +402,7 @@ class PalletizingRobot:
                                    self.NOMINAL_RX_DEG, self.NOMINAL_RY_DEG, self.NOMINAL_RZ_DEG]
         
         self._wait_for_step_confirmation(f"Moving to approach pick pose: {np.round(approach_pose_cartesian,1).tolist()}")
-        success, _, _ = self.robot.move_l_pose(np.array(approach_pose_cartesian), speed=40, acc=30)
+        success, _, _ = self.robot.move_l_pose(np.array(approach_pose_cartesian), speed=80, acc=50)
         if not success:
             print("  Error: Failed to move to Cartesian approach pose.")
             return False
@@ -421,7 +421,7 @@ class PalletizingRobot:
         target_joints_deg_array[5] = target_j6_deg_for_pick # J6 is index 5
         
         self._wait_for_step_confirmation(f"Orienting J6 to {target_j6_deg_for_pick:.1f} deg. Target joints: {np.round(target_joints_deg_array,2).tolist()}")
-        success, _, _ = self.robot.move_j_joint(target_joints_deg_array, speed=40, acc=30)
+        success, _, _ = self.robot.move_j_joint(target_joints_deg_array, speed=80, acc=50)
         if not success:
             print("  Error: Failed to orient Joint 6.")
             return False
@@ -439,7 +439,7 @@ class PalletizingRobot:
         pick_pose_cartesian_final = [tcp_after_j6_orient[0], tcp_after_j6_orient[1], self.PICK_Z_CONVEYOR,
                                      tcp_after_j6_orient[3], tcp_after_j6_orient[4], tcp_after_j6_orient[5]]
         self._wait_for_step_confirmation(f"Moving down to pick (Cartesian): {np.round(pick_pose_cartesian_final,1).tolist()}")
-        success, _, _ = self.robot.move_l_pose(np.array(pick_pose_cartesian_final), speed=10, acc=60, dec=30)
+        success, _, _ = self.robot.move_l_pose(np.array(pick_pose_cartesian_final), speed=40, acc=60, dec=30)
         if not success: 
             print("  Error: Failed to move to actual pick pose.")
             return False
@@ -454,7 +454,7 @@ class PalletizingRobot:
         lift_pose_cartesian_final = [tcp_after_j6_orient[0], tcp_after_j6_orient[1], self.LIFT_Z_COMMON,
                                      tcp_after_j6_orient[3], tcp_after_j6_orient[4], tcp_after_j6_orient[5]]
         self._wait_for_step_confirmation(f"Lifting object (Cartesian): {np.round(lift_pose_cartesian_final,1).tolist()}")
-        success, _, _ = self.robot.move_l_pose(np.array(lift_pose_cartesian_final), speed=20, acc=30, dec=60)
+        success, _, _ = self.robot.move_l_pose(np.array(lift_pose_cartesian_final), speed=80, acc=50, dec=60)
         if not success:
             print("  Error: Failed to lift object.")
             return False
@@ -494,7 +494,7 @@ class PalletizingRobot:
                                current_pose_cartesian[3], current_pose_cartesian[4], place_j6_on_pallet_deg]
         
         self._wait_for_step_confirmation(f"Moving to approach place pose: {np.round(approach_place_pose,1).tolist()}")
-        success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=80, acc=50)
+        success, _, _ = self.robot.move_l_pose(np.array(approach_place_pose), speed=100, acc=70)
         if not success:
             print("  Error: Failed to move to approach place pose.")
             return False
@@ -513,7 +513,7 @@ class PalletizingRobot:
                              current_pose_cartesian[3], current_pose_cartesian[4], current_pose_cartesian[5]]
         
         self._wait_for_step_confirmation(f"Moving to actual place pose: {np.round(actual_place_pose,1).tolist()}")
-        success, _, _ = self.robot.move_l_pose(np.array(actual_place_pose), speed=20, acc=20)
+        success, _, _ = self.robot.move_l_pose(np.array(actual_place_pose), speed=50, acc=30)
         if not success:
             print("  Error: Failed to move to actual place pose.")
             return False
@@ -530,7 +530,7 @@ class PalletizingRobot:
                              current_pose_cartesian[3], current_pose_cartesian[4], current_pose_cartesian[5]]
 
         self._wait_for_step_confirmation(f"Retreating from place pose: {np.round(actual_place_pose,1).tolist()}")
-        success, _, _ = self.robot.move_l_pose(np.array(actual_place_pose), speed=20, acc=20)
+        success, _, _ = self.robot.move_l_pose(np.array(actual_place_pose), speed=80, acc=50)
         if not success:
             print("  Error: Failed to retreat from place pose.")
             return False 
