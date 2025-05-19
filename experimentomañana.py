@@ -544,7 +544,7 @@ class PalletizingRobot:
             x_vuelta = -35.709
             z_vuelta = -150.004
             x_pose = self.target_x - 16
-            y_pose = self.target_y + 24
+            y_pose = self.target_y + 30
 
             pose = [x_pose, y_pose, z_seguro, rx, ry, rz]
             bajar = [x_pose, y_pose, fixed_z, rx, ry, rz]
