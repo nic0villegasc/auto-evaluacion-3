@@ -186,16 +186,30 @@ class PalletizingRobot:
 
                     self.robot.move_l_pose(np.array(pointhigh), speed=30, acc=20)
                     self.robot.wait_until_motion_complete()
+
+                    self._wait_for_step_confirmation("Movimiento 6")
+
                     self.robot.move_l_pose(np.array(blokmos1safe), speed=30, acc=20)
                     self.robot.wait_until_motion_complete()
+                    
+                    self._wait_for_step_confirmation("Movimiento 7")
+
                     self.robot.move_l_pose(np.array(blokmos1), speed=30, acc=20)
                     self.robot.wait_until_motion_complete()
+
+                    self._wait_for_step_confirmation("Movimiento 8")
+
                     self.robot.open_gripper()
                     self.robot.wait_until_motion_complete()
                     self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
+
+                    self._wait_for_step_confirmation("Movimiento 9")
+
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
+
+                    self._wait_for_step_confirmation("Movimiento 10")
 
                 elif count == 2:
                     blokmos2= [206.058,507.878,49.5,-1.480,3.181,-92.352]
@@ -503,6 +517,11 @@ class PalletizingRobot:
             return
         return None
     
+    def _wait_for_step_confirmation(self, step_message):
+        """ If step-by-step mode is enabled, prints a message and waits for Enter key. """
+        if self.step_by_step_enabled:
+            input(f"--- PAUSED: {step_message} --- Press Enter to continue...")
+    
     def pick_and_place(self):
         self.robot.open_gripper()
         self.robot.wait_until_motion_complete()
@@ -511,6 +530,9 @@ class PalletizingRobot:
         print("[INFO] Moviendo al origen seguro antes de iniciar pick and place...")
         self.robot.move_l_pose(np.array(origin_pose), speed=20, acc=20)
         self.robot.wait_until_motion_complete()
+
+        self._wait_for_step_confirmation("Movimiento 1")
+        
 
         if not self.object_detected:
             return
@@ -546,6 +568,9 @@ class PalletizingRobot:
             self.robot.wait_until_motion_complete()
             self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
+
+            self._wait_for_step_confirmation("Movimiento 2")
+
             success, joints, _ = self.robot.get_current_joints()
             if not success:
                 print("[ERROR] No se pudieron obtener los valores de los joints.")
@@ -560,12 +585,21 @@ class PalletizingRobot:
             self.robot.wait_until_motion_complete()
             self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
+            
+            self._wait_for_step_confirmation("Movimiento 3")
+
             self.robot.move_l_pose(np.array(bajar), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
+
+            self._wait_for_step_confirmation("Movimiento 4")
+
             self.robot.close_gripper()
             self.robot.wait_until_motion_complete()
             self.robot.move_l_pose(np.array(levantar), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
+
+            self._wait_for_step_confirmation("Movimiento 5")
+
             self.mozaic_generator(angulo_primario,self.count_0)
 
             self.robot.close_gripper()
