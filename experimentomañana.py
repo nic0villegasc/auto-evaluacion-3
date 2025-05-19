@@ -179,7 +179,7 @@ class PalletizingRobot:
         
 
     def mozaic_generator(self,angle,count):
-        pointhigh = [206.058,507.878,-300,-1.480,3.181,-92.352]
+        pointhigh = [206.058,507.878,-400,-1.480,3.181,-92.352]
         if angle == 90:
             if count < 4:
                 if count == 1:
@@ -291,19 +291,19 @@ class PalletizingRobot:
             elif count < 10 :
                 z = -147.364
                 if count == 7:
-                    blokmos1= [80.158,507.878,-147.364,-1.480,3.181,-92.352]
-                    blokmos1safe= [80.158,538.505,-300,-1.486,3.203,-92.353]
+                    blokmos11= [80.158,507.878,-147.364,-1.480,3.181,-92.352]
+                    blokmos11safe= [80.158,538.505,-300,-1.486,3.203,-92.353]
                     
 
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
-                    self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
+                    self.robot.move_l_pose(np.array(blokmos11safe), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
-                    self.robot.move_l_pose(np.array(blokmos1), speed=10, acc=20)
+                    self.robot.move_l_pose(np.array(blokmos11), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
                     self.robot.open_gripper()
                     self.robot.wait_until_motion_complete()
-                    self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
+                    self.robot.move_l_pose(np.array(blokmos11safe), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
