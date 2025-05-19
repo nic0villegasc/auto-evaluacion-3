@@ -183,7 +183,7 @@ class PalletizingRobot:
         if angle == 90:
             if count < 4:
                 if count == 1:
-                    blokmos1= [80.158,507.878,39.5,-1.480,3.181,-92.352]
+                    blokmos1= [80.158,507.878,49.5,-1.480,3.181,-92.352]
                     blokmos1safe= [80.158,538.505,-300,-1.486,3.203,-92.353]
                     
 
@@ -201,7 +201,7 @@ class PalletizingRobot:
                     self.robot.wait_until_motion_complete()
 
                 elif count == 2:
-                    blokmos2= [206.058,507.878,39.5,-1.480,3.181,-92.352]
+                    blokmos2= [206.058,507.878,49.5,-1.480,3.181,-92.352]
                     blokmos2safe= [206.058,507.878,-300,-1.480,3.181,-92.352]
                     
                 
@@ -218,7 +218,7 @@ class PalletizingRobot:
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
                 elif count == 3:
-                    blokmos3= [335.130,507.878,39.5,-1.480,3.181,-92.352]
+                    blokmos3= [335.130,507.878,49.5,-1.480,3.181,-92.352]
                     blokmos3safe= [335.130,507.878,-300,-1.480,3.181,-92.352]
                     
                 
