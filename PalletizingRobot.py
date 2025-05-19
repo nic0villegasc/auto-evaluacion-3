@@ -41,8 +41,8 @@ class PalletizingRobot:
         self.Y_MAPPING_SLOPE = -0.5455
         self.Y_MAPPING_INTERCEPT = 49.53
         
-        self.ANG_MAPPING_SLOPE =	-0.5140
-        self.ANG_MAPPING_INTERCEPT = 81.93
+        self.ANG_MAPPING_SLOPE =		1.006
+        self.ANG_MAPPING_INTERCEPT = -93.56
         
         self.PICK_Z_CONVEYOR = -33.0      # Actual Z height for picking from conveyor
         self.LIFT_Z_COMMON = -300.0       # Common Z height for approach, lift, and retreat
@@ -248,6 +248,9 @@ class PalletizingRobot:
       
       frame = cv2.drawContours(frame, [box], 0, (0, 255, 0), 2) 
       frame = cv2.circle(frame, center, 5, (255, 0, 0), 10)
+      
+      if angle >= 180:
+        angle = angle - 180
       
       return frame, mask, center, angle, width, height, 1
     
