@@ -18,6 +18,9 @@ class PalletizingRobot:
         self.camera_available = False 
         self.helper = None 
         
+        self.SENSOR_ADDRESS = 915
+        self.CINTA_ADDRESS = 911
+        
         self.step_by_step_enabled = step_mode 
 
         self.piece_num = 0 
@@ -759,7 +762,6 @@ class PalletizingRobot:
                     return # Exit the run method
 
                 previous_sensor_state_is_detecting = False
-                SENSOR_ADDRESS = 915
                 QUEUE_GET_TIMEOUT = 0.05
 
                 try:
@@ -768,9 +770,11 @@ class PalletizingRobot:
                             print("CRITICAL: Camera thread has stopped unexpectedly. Signaling shutdown.")
                             self._stop_event.set()
                             break
+                          
+                        self.robot.send_cmd("setVirtualOutput", {"addr": 799})
 
                         # Sensor reading logic
-                        success_read, sensor_value_str, _ = self.robot.send_cmd("getVirtualOutput", {"addr": SENSOR_ADDRESS})
+                        success_read, sensor_value_str, _ = self.robot.send_cmd("getVirtualOutput", {"addr": self.SENSOR_ADDRESS})
                         current_sensor_state_is_detecting = None
 
                         if success_read and sensor_value_str is not None:
@@ -781,16 +785,16 @@ class PalletizingRobot:
                                 elif sensor_value == 0:
                                     current_sensor_state_is_detecting = True
                                 else:
-                                    print(f"Warning: Unexpected sensor value ({sensor_value}) at address {SENSOR_ADDRESS}")
+                                    print(f"Warning: Unexpected sensor value ({sensor_value}) at address {self.SENSOR_ADDRESS}")
                             except ValueError:
-                                print(f"Warning: Received non-integer sensor value '{sensor_value_str}' from address {SENSOR_ADDRESS}")
+                                print(f"Warning: Received non-integer sensor value '{sensor_value_str}' from address {self.SENSOR_ADDRESS}")
                         elif not success_read:
-                            print(f"Warning: Failed to read virtual output at address {SENSOR_ADDRESS}.")
+                            print(f"Warning: Failed to read virtual output at address {self.SENSOR_ADDRESS}.")
 
                         # --- Main Logic: Sensor Trigger and Queue Check ---
                         if current_sensor_state_is_detecting is True:
                             if not previous_sensor_state_is_detecting:
-                                print(f"[ROBOT_RUN] Sensor at {SENSOR_ADDRESS} indicates object presence.")
+                                print(f"[ROBOT_RUN] Sensor at {self.SENSOR_ADDRESS} indicates object presence.")
 
                             try:
                                 object_data_to_process = self.object_queue.get(block=True, timeout=QUEUE_GET_TIMEOUT)
@@ -817,7 +821,7 @@ class PalletizingRobot:
                         
                         elif current_sensor_state_is_detecting is False:
                             if previous_sensor_state_is_detecting is True:
-                                print(f"[ROBOT_RUN] Sensor at {SENSOR_ADDRESS} indicates object removed or no longer present.")
+                                print(f"[ROBOT_RUN] Sensor at {self.SENSOR_ADDRESS} indicates object removed or no longer present.")
                         
                         if current_sensor_state_is_detecting is not None:
                             previous_sensor_state_is_detecting = current_sensor_state_is_detecting
