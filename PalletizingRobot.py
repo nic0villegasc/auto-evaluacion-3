@@ -771,7 +771,10 @@ class PalletizingRobot:
                             self._stop_event.set()
                             break
                           
-                        self.robot.send_cmd("setVirtualOutput", {"addr": 799})
+                        success_read, cinta_value_str, _ = self.robot.send_cmd("setVirtualOutput", {"addr": 799})
+                        
+                        if success_read:
+                          print(f"[RUN] Set virtual output: 799")
 
                         # Sensor reading logic
                         success_read, sensor_value_str, _ = self.robot.send_cmd("getVirtualOutput", {"addr": self.SENSOR_ADDRESS})
