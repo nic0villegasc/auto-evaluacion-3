@@ -46,7 +46,8 @@ class PalletizingRobot:
 
         self.time_previous = time.time()
         self.time_threshold = 5
-        
+        self.pallet90lleno = 0
+        self.pallet0lleno = 0
     def initialize_camera(self):
         self.helper = CameraCalibrationHelper()
         self.camera = self.helper.initialize_raspicam(headless = True, sensor_index = -1)
@@ -158,6 +159,7 @@ class PalletizingRobot:
         frame = cv2.circle(frame, center, 5, (255, 0, 0), 10)
         return frame, mask, center, angle, width, height, 1
         
+
     def mozaic_generator(self,angle,count):
         pointhigh = [206.058,507.878,-400,-1.480,3.181, 92.352]
         if self.detected_width < self.detected_height:
@@ -336,7 +338,8 @@ class PalletizingRobot:
                     self.robot.wait_until_motion_complete()
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
-                    self.count_90 = 1
+                    self.count_0 = 1
+                    self.pallet0lleno= 1
         elif self.detected_height < self.detected_width:
             if count < 4:
                 if count == 1:
@@ -489,6 +492,7 @@ class PalletizingRobot:
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
                 elif count == 9:
+                    
                     blokmos3= [917.352,507.878,-147.364,-1.480,3.181,92.352]
                     blokmos3safe= [917.352,507.878,-300,-1.480,3.181,92.352]
                     
@@ -505,7 +509,8 @@ class PalletizingRobot:
                     self.robot.wait_until_motion_complete()
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
-                    self.count_0 = 1
+                    self.count_90 = 1
+                    self.pallet90lleno = 1
         else:
             return
         return None
@@ -514,8 +519,85 @@ class PalletizingRobot:
         """ If step-by-step mode is enabled, prints a message and waits for Enter key. """
         if True:
             input(f"--- PAUSED: {step_message} --- Press Enter to continue...")
-    
+    def casonofeliz1(self):
+        self.robot.open_gripper()
+        self.robot.wait_until_motion_complete()
+        desired_angle = self.detected_angle
+        target_bajar=[self.target_x, self.target_y, -33, 1.753, -0.411, desired_angle]
+        target_alachucha= [-50, 0, -170, -0.584, -1.702, 91.0]
+        origin_pose = [0, 0, -170, -0.584, -1.702, 91.0]
+        
+          # Ajusta rx, ry, rz según tu orientación segura
+        print("CASO NO FELIZ 1")
+        self._wait_for_step_confirmation("Movimiento 1")
+        self.robot.move_l_pose(np.array(origin_pose), speed=20, acc=20)
+        self.robot.wait_until_motion_complete()
+        desired_angle = self.detected_angle
+        # x, y, z, rx, ry, rz
+        target_pose = [self.target_x, self.target_y, -150, 1.753, -0.411, desired_angle]
+        success, joints, _ = robot.get_current_joints()
+        if success:
+            joints[5] = desired_angle  # En grados
+            robot.move_j_joint(joints, speed=10, acc=20)
+        self.robot.wait_until_motion_complete()
+        self.robot.move_l_pose(np.array(target_pose), speed=10, acc=20)
+        self.robot.wait_until_motion_complete()
+        self.robot.move_l_pose(np.array(target_bajar), speed=20, acc=20)
+        self.robot.wait_until_motion_complete()
+        self.robot.close_gripper()
+        self.robot.wait_until_motion_complete()
+        self.robot.move_l_pose(np.array(target_pose), speed=10, acc=20)
+        self.robot.wait_until_motion_complete()
+        self.robot.move_l_pose(np.array(target_alachucha), speed=10, acc=20)
+        self.robot.wait_until_motion_complete()
+        self.robot.open_gripper()
+        self.robot.wait_until_motion_complete()
+        return
+        
+    def casonofeliz2 (self):
+        respuesta = input("Pallet lleno. ¿Se ha vaciado el pallet? (s/n): ")
+
+        if respuesta.lower() == "s":
+            pallet_vaciado = input("¿Cuál de los dos pallets se ha vaciado? (0 para ángulo 0°, 90 para ángulo 90°): ")
+            if pallet_vaciado == "90":
+                self.pallet90lleno = 0
+                self.count_90 = 1
+                print("Pallet de 90° ha sido vaciado.")
+            elif pallet_vaciado == "0":
+                self.pallet0lleno = 0
+                self.pallet0lleno = 1
+                print("Pallet de 0° ha sido vaciado.")
+            else:
+                print("Opción no válida. Debes escribir 0 o 90.")
+        else:
+            print("No se ha vaciado ningún pallet.")
+        return 
+    def casonofeliz3(self):
+        origin_pose = [0, 0, -170, -0.584, -1.702, 91.0]
+        
+          # Ajusta rx, ry, rz según tu orientación segura
+        print("CASO NO FELIZ 1")
+        self._wait_for_step_confirmation("Movimiento 1")
+        self.robot.move_l_pose(np.array(origin_pose), speed=20, acc=20)
+        self.robot.wait_until_motion_complete()
+
+        puntoempuje = []
+        puntochao =[]
     def pick_and_place(self):
+
+        print(f"[PICK_AND_PLACE] Ángulo detectado = {self.detected_angle:.1f}°")
+        print(f"[INFO] Width: {self.detected_width:.1f}, Height: {self.detected_height:.1f}")
+        if self.detected_angle <170 and self.detected_angle >100:
+            self.casonofeliz1()
+        elif self.detected_angle < 80:
+            self.casonofeliz1()
+        elif self.detected_angle > 190:
+            self.casonofeliz1()
+        elif self.pallet0lleno or self.pallet90lleno:
+            self.casonofeliz2
+        else:
+            print("Todo bien")
+        
         self.robot.open_gripper()
         self.robot.wait_until_motion_complete()
         
@@ -524,7 +606,7 @@ class PalletizingRobot:
         self._wait_for_step_confirmation("Movimiento 1")
         self.robot.move_l_pose(np.array(origin_pose), speed=20, acc=20)
         self.robot.wait_until_motion_complete()
-
+        
         if not self.object_detected:
             return
 
@@ -605,6 +687,7 @@ class PalletizingRobot:
             self.robot.close_gripper()
             self.robot.move_l_pose(np.array(vuelta), speed=20, acc=20)
             self.count_0 += 1
+
             
             
 
