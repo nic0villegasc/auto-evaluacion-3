@@ -590,16 +590,13 @@ class PalletizingRobot:
 
         print(f"[PICK_AND_PLACE] Ángulo detectado = {self.detected_angle:.1f}°")
         print(f"[INFO] Width: {self.detected_width:.1f}, Height: {self.detected_height:.1f}")
-        if self.detected_angle <170 and self.detected_angle >100:
-            self.casonofeliz1()
-        elif self.detected_angle < 80:
-            self.casonofeliz1()
-        elif self.detected_angle > 190:
-            self.casonofeliz1()
+        angle = self.detected_angle
+        if (-10 <= angle <= 10) or (80 <= angle <= 100):
+            return
         elif self.pallet0lleno or self.pallet90lleno:
             self.casonofeliz2
         else:
-            print("Todo bien")
+            self.casonofeliz1
         
         self.robot.open_gripper()
         self.robot.wait_until_motion_complete()
