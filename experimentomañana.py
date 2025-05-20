@@ -665,7 +665,7 @@ class PalletizingRobot:
             
 
             tcp_after_j6_orient[0] = x_pose
-            tcp_after_j6_orient[1] = y_pose
+            tcp_after_j6_orient[1] = y_pose - 10
             tcp_after_j6_orient[2] = fixed_z
 
             self.robot.move_l_pose(np.array(tcp_after_j6_orient), speed=20, acc=20)
