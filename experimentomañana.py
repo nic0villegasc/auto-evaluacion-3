@@ -67,12 +67,14 @@ class PalletizingRobot:
                 cv2.imshow("Robot Camera", frame)
                 cv2.imshow("Robot Camera mask", mask)
 
-                cx = center[0]
-                cy = center[1]
+                
 
                 time_elapsed = time.time() - self.time_previous
 
                 if success and time_elapsed > self.time_threshold:
+
+                    cx = center[0]
+                    cy = center[1]
 
                     # Print coordenadas desde la cámara
                     print(f"[DETECT_BOX] Cámara → x={cx}, y={cy}, ángulo={angle:.1f}°")
