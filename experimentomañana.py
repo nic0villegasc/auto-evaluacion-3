@@ -525,9 +525,6 @@ class PalletizingRobot:
         self.robot.move_l_pose(np.array(origin_pose), speed=20, acc=20)
         self.robot.wait_until_motion_complete()
 
-        
-        
-
         if not self.object_detected:
             return
 
