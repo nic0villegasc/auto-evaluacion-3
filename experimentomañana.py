@@ -538,10 +538,11 @@ class PalletizingRobot:
         
         origin_pose = [0, 0, -170, -0.584, -1.702, 91.0]  # Ajusta rx, ry, rz según tu orientación segura
         print("[INFO] Moviendo al origen seguro antes de iniciar pick and place...")
+        self._wait_for_step_confirmation("Movimiento 1")
         self.robot.move_l_pose(np.array(origin_pose), speed=20, acc=20)
         self.robot.wait_until_motion_complete()
 
-        self._wait_for_step_confirmation("Movimiento 1")
+        
         
 
         if not self.object_detected:
@@ -560,7 +561,7 @@ class PalletizingRobot:
             fixed_y = 0         # posición fija en Y
             fixed_z = -33       # altura segura para no tocar la cinta
             z_seguro = -170
-            rx, ry, rz = 1.753, -0.411, -4.831  # orientación fija
+            rx, ry, rz = 1.753, -0.411, 92.352  # orientación fija
             z_subida = -150
             x_caida = -410
             y_vuelta = 52.468
