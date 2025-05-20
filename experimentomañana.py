@@ -43,6 +43,9 @@ class PalletizingRobot:
         self.detected_angle=0.0
         self.count_90 = 1  # Contador para bloques verticales (90°)
         self.count_0 = 1   # Contador para bloques horizontales (0°)
+
+        self.time_previous = time.time()
+        self.time_threshold = 2
         
     def initialize_camera(self):
         self.helper = CameraCalibrationHelper()
@@ -63,6 +66,34 @@ class PalletizingRobot:
                 frame = cv2.rectangle(frame, self.cam_min_lim, self.cam_max_lim, (0, 0, 0), 10)
                 cv2.imshow("Robot Camera", frame)
                 cv2.imshow("Robot Camera mask", mask)
+
+                cx = center[0]
+                cy = center[1]
+
+                time_elapsed = time.time() - self.time_previous
+
+                if success and time_elapsed > self.time_threshold:
+
+                    # Print coordenadas desde la cámara
+                    print(f"[DETECT_BOX] Cámara → x={cx}, y={cy}, ángulo={angle:.1f}°")
+                    # Conversión afín a coordenadas del robot
+                    u, v = cx, cy
+                    a =  0.5208
+                    b = -132.57 # s·sin(θ)
+                    c = 0.098 # tx
+                    f = -52.005764  # ty
+                    Xr = a*u+b
+                    Yr = -34.796 
+                    corde=[Xr,Yr]    # -0.2561*u + 0.3541*v -86.17
+                    # Print coordenadas objetivo en el sistema del robot
+                    self.target_x=Xr
+                    self.target_y=Yr
+                    self.object_detected=True
+                    print(f"[MAP] Robot → X={Xr:.1f} mm, Y={Yr:.1f} mm")
+
+                    self.time_previous = time.time()
+
+
                 
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
@@ -116,25 +147,6 @@ class PalletizingRobot:
         cx = int(center[0]) + self.cam_min_lim[0]
         cy = int(center[1]) + self.cam_min_lim[1]
         center = (cx, cy)
-        # Print coordenadas desde la cámara
-        print(f"[DETECT_BOX] Cámara → x={cx}, y={cy}, ángulo={angle:.1f}°")
-        # Conversión afín a coordenadas del robot
-        u, v = cx, cy
-        a =  0.5208
-        b = -132.57 # s·sin(θ)
-        c = 0.098 # tx
-        f = -52.005764  # ty
-        Xr = a*u+b
-        Yr = -34.796 
-        corde=[Xr,Yr]    # -0.2561*u + 0.3541*v -86.17
-        # Print coordenadas objetivo en el sistema del robot
-        self.target_x=Xr
-        self.target_y=Yr
-        self.object_detected=True
-        print(f"[MAP] Robot → X={Xr:.1f} mm, Y={Yr:.1f} mm")
-        
-        
-        
         
         # Dibujar en pantalla
     
