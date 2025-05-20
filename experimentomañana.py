@@ -574,11 +574,7 @@ class PalletizingRobot:
             self.robot.wait_until_motion_complete()
             print("[INFO] Joint 6 movido a 80.768 grados.")
 
-            
             self.robot.open_gripper()
-            self.robot.wait_until_motion_complete()
-            self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
-            self.robot.wait_until_motion_complete()
             
             self._wait_for_step_confirmation("Movimiento 3")
 
