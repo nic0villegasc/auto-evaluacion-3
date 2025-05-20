@@ -592,9 +592,9 @@ class PalletizingRobot:
         print(f"[INFO] Width: {self.detected_width:.1f}, Height: {self.detected_height:.1f}")
         angle = self.detected_angle
         if (-10 <= angle <= 10) or (80 <= angle <= 100):
-            return
-        elif self.pallet0lleno or self.pallet90lleno:
-            self.casonofeliz2
+            print("angulo bien")
+        #elif self.pallet0lleno or self.pallet90lleno:
+            #self.casonofeliz2
         else:
             self.casonofeliz1
         
