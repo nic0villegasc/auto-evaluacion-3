@@ -77,7 +77,7 @@ class PalletizingRobot:
                     cy = center[1]
 
                     # Print coordenadas desde la cámara
-                    print(f"[DETECT_BOX] Cámara → x={cx}, y={cy}, ángulo={angle:.1f}°")
+                    print(f"[DETECT_BOX] Cámara → x={cx}, y={cy}, Width: {width:.1f}, Height: {height:.1f}, Angle: {angle:.1f}°")
                     # Conversión afín a coordenadas del robot
                     u, v = cx, cy
                     a =  0.5208
