@@ -146,35 +146,6 @@ class PalletizingRobot:
         frame = cv2.circle(frame, center, 5, (255, 0, 0), 10)
         return frame, mask, center, angle, 1
         
-
-    def map_camara2robot(self, center_x, angle):
-        
-
-        """
-        [INCOMPLETE FUNCTION]: It should map the camera coordinates of the piece
-        to the desired position of the robot, we will help you only with the 
-        calculation of the robot x position, the rest is up to you!
-        
-        """
-        # Calculation of the robot delta x position
-        self.piece_angle = 90 - angle
-        width = 90.0 # mean width of the wood piece
-        height = 140.0 # mean height of the wood piece
-        beta = np.arctan(height/width) 
-        L = np.sqrt((width/2)**2 + (height/2)**2)
-        if self.piece_angle < 0:
-            aux = self.piece_angle
-        else:
-            aux = -self.piece_angle
-        self.robot_x = L * np.sin(np.pi + (aux * (np.pi/180)) - beta)
-        
-        # Some hints
-        self.robot_y_lims = None
-        self.camera_x_center_lims = None
-        self.robot_y = None
-        self.robot_angle = None
-        
-
     def mozaic_generator(self,angle,count):
         pointhigh = [206.058,507.878,-400,-1.480,3.181, 92.352]
         if self.detected_width < self.detected_height:
