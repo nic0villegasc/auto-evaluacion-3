@@ -535,10 +535,13 @@ class PalletizingRobot:
         desired_angle = self.detected_angle
         # x, y, z, rx, ry, rz
         target_pose = [self.target_x, self.target_y, -150, 1.753, -0.411, desired_angle]
-        success, joints, _ = robot.get_current_joints()
-        if success:
-            joints[5] = desired_angle  # En grados
-            robot.move_j_joint(joints, speed=10, acc=20)
+        success, joints, _ = self.robot.get_current_joints()
+        if not success:
+            print("[ERROR] No se pudieron obtener los valores de los joints.")
+            return
+        joints[5] = 80.768
+        self.robot.move_j_joint(joints, speed=20, acc=20)
+        self.robot.wait_until_motion_complete()
         self.robot.wait_until_motion_complete()
         self.robot.move_l_pose(np.array(target_pose), speed=10, acc=20)
         self.robot.wait_until_motion_complete()
@@ -662,7 +665,7 @@ class PalletizingRobot:
 
             self.robot.open_gripper()
             
-            self._wait_for_step_confirmation("Movimiento 3")
+            
 
             tcp_after_j6_orient[0] = x_pose
             tcp_after_j6_orient[1] = y_pose
@@ -671,7 +674,7 @@ class PalletizingRobot:
             self.robot.move_l_pose(np.array(tcp_after_j6_orient), speed=20, acc=20)
             self.robot.wait_until_motion_complete()
 
-            self._wait_for_step_confirmation("Movimiento 4")
+            
 
             tcp_after_j6_orient[2] = z_subida
 
@@ -680,7 +683,7 @@ class PalletizingRobot:
             self.robot.move_l_pose(np.array(tcp_after_j6_orient), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
 
-            self._wait_for_step_confirmation("Movimiento 5")
+            
 
             self.mozaic_generator(angulo_primario,self.count_0)
 
@@ -721,7 +724,7 @@ class PalletizingRobot:
             self.robot.open_gripper()
             self.robot.wait_until_motion_complete()
 
-            self._wait_for_step_confirmation("Movimiento 90.1")
+            
 
             self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
@@ -730,18 +733,18 @@ class PalletizingRobot:
             self.robot.wait_until_motion_complete()
 
 
-            self._wait_for_step_confirmation("Movimiento 90.2")
+            
 
             self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
 
-            self._wait_for_step_confirmation("Movimiento 90.3")
+            
             self.robot.move_l_pose(np.array(bajar), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
             self.robot.close_gripper()
             self.robot.wait_until_motion_complete()
 
-            self._wait_for_step_confirmation("Movimiento 90.4")
+            
             self.robot.move_l_pose(np.array(levantar), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
             self.mozaic_generator(angulo_primario,self.count_90)
