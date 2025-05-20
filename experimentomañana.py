@@ -574,18 +574,31 @@ class PalletizingRobot:
             self.robot.wait_until_motion_complete()
             print("[INFO] Joint 6 movido a 80.768 grados.")
 
+            self._wait_for_step_confirmation("Getting TCP pose after J6 orientation")
+            success_tcp, tcp_after_j6_orient, _ = self.robot.get_tool_pose(user_coord=1, tool_num=2)
+            if not success_tcp:
+                print("  Error: Failed to get TCP pose after J6 orientation.")
+                return False
+            print(f"  TCP after J6 orient (deg): {np.round(tcp_after_j6_orient,2).tolist()}")
+
             self.robot.open_gripper()
             
             self._wait_for_step_confirmation("Movimiento 3")
 
-            self.robot.move_l_pose(np.array(bajar), speed=10, acc=20)
+            tcp_after_j6_orient[0] = x_pose
+            tcp_after_j6_orient[1] = y_pose
+            tcp_after_j6_orient[2] = fixed_z
+
+            self.robot.move_l_pose(np.array(tcp_after_j6_orient), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
 
             self._wait_for_step_confirmation("Movimiento 4")
 
+            tcp_after_j6_orient[2] = z_subida
+
             self.robot.close_gripper()
             self.robot.wait_until_motion_complete()
-            self.robot.move_l_pose(np.array(levantar), speed=10, acc=20)
+            self.robot.move_l_pose(np.array(tcp_after_j6_orient), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
 
             self._wait_for_step_confirmation("Movimiento 5")
