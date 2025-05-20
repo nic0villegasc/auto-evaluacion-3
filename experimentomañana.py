@@ -162,7 +162,7 @@ class PalletizingRobot:
 
     def mozaic_generator(self,angle,count):
         pointhigh = [206.058,507.878,-400,-1.480,3.181, 92.352]
-        if self.detected_width < self.detected_height:
+        if -10 <= angle <= 10:
             if count < 4:
                 if count == 1:
                     blokmos1= [80.158,507.878,49.5,-1.480,3.181,92.352]
@@ -340,7 +340,7 @@ class PalletizingRobot:
                     self.robot.wait_until_motion_complete()
                     self.count_0 = 1
                     self.pallet0lleno= 1
-        elif self.detected_height < self.detected_width:
+        elif 80 <= angle <= 100:
             if count < 4:
                 if count == 1:
                     blokmos1= [565.558,507.878,39.5,-1.480,3.181,92.352]
@@ -615,7 +615,7 @@ class PalletizingRobot:
         print(f"[INFO] Width: {self.detected_width:.1f}, Height: {self.detected_height:.1f}")
 
         # CASO 180 GRADOS (horizontal)
-        if self.detected_width < self.detected_height:
+        if -10 <= angle <= 10:
             print("[INFO] El bloque está orientado en 0 grados (horizontal). Ejecutando flujo en X.")
             angulo_primario = 0
             
@@ -692,7 +692,7 @@ class PalletizingRobot:
             
 
         # CASO 90 GRADOS (vertical)
-        elif self.detected_height < self.detected_width:
+        elif 80 <= angle <= 100:
             print("[INFO] El bloque está orientado en 90 grados (vertical). Ejecutando flujo en Y.")
             angulo_primario = 90
             # Coordenadas fijas excepto Y
