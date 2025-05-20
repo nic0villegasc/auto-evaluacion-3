@@ -180,8 +180,8 @@ class PalletizingRobot:
         if self.detected_width < self.detected_height:
             if count < 4:
                 if count == 1:
-                    blokmos1= [80.158,507.878,49.5,-1.480,3.181,-92.352]
-                    blokmos1safe= [80.158,538.505,-300,-1.486,3.203,-92.353]
+                    blokmos1= [80.158,507.878,49.5,-1.480,3.181,92.352]
+                    blokmos1safe= [80.158,538.505,-300,-1.486,3.203,92.353]
                     
                     self._wait_for_step_confirmation("Movimiento 180.6")
 
@@ -357,8 +357,8 @@ class PalletizingRobot:
         elif self.detected_height < self.detected_width:
             if count < 4:
                 if count == 1:
-                    blokmos1= [565.558,507.878,39.5,-1.480,3.181,-92.352]
-                    blokmos1safe= [565.558,538.505,-300,-1.486,3.203,-92.353]
+                    blokmos1= [565.558,507.878,39.5,-1.480,3.181,92.352]
+                    blokmos1safe= [565.558,538.505,-300,-1.486,3.203,92.353]
                     
                     self._wait_for_step_confirmation("Movimiento 90.5")
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
