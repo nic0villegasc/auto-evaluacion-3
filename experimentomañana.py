@@ -560,7 +560,7 @@ class PalletizingRobot:
 
             self.robot.open_gripper()
             self.robot.wait_until_motion_complete()
-            self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
+            self.robot.move_l_pose(np.array(pose), speed=20, acc=20)
             self.robot.wait_until_motion_complete()
 
             self._wait_for_step_confirmation("Movimiento 2")
@@ -570,7 +570,7 @@ class PalletizingRobot:
                 print("[ERROR] No se pudieron obtener los valores de los joints.")
                 return
             joints[5] = 80.768
-            self.robot.move_j_joint(joints, speed=10, acc=20)
+            self.robot.move_j_joint(joints, speed=20, acc=20)
             self.robot.wait_until_motion_complete()
             print("[INFO] Joint 6 movido a 80.768 grados.")
 
@@ -589,7 +589,7 @@ class PalletizingRobot:
             tcp_after_j6_orient[1] = y_pose
             tcp_after_j6_orient[2] = fixed_z
 
-            self.robot.move_l_pose(np.array(tcp_after_j6_orient), speed=10, acc=20)
+            self.robot.move_l_pose(np.array(tcp_after_j6_orient), speed=20, acc=20)
             self.robot.wait_until_motion_complete()
 
             self._wait_for_step_confirmation("Movimiento 4")
