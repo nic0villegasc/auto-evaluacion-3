@@ -45,7 +45,7 @@ class PalletizingRobot:
         self.count_0 = 1   # Contador para bloques horizontales (0°)
 
         self.time_previous = time.time()
-        self.time_threshold = 2
+        self.time_threshold = 5
         
     def initialize_camera(self):
         self.helper = CameraCalibrationHelper()
@@ -60,7 +60,7 @@ class PalletizingRobot:
                 frame = self.camera.capture_array()[:, :, 0:3]
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
                 frame = self.helper.correct_image(frame)
-                frame, mask, center, angle, success = self.detect_box(frame, self.gray_thresh,
+                frame, mask, center, angle, width, height, success = self.detect_box(frame, self.gray_thresh,
                                                                       self.area_thresh, iter_ = 1)
                 
                 frame = cv2.rectangle(frame, self.cam_min_lim, self.cam_max_lim, (0, 0, 0), 10)
@@ -90,6 +90,9 @@ class PalletizingRobot:
                     # Print coordenadas objetivo en el sistema del robot
                     self.target_x=Xr
                     self.target_y=Yr
+                    self.detected_width = width
+                    self.detected_height = height
+                    self.detected_angle = angle
                     self.object_detected=True
                     print(f"[MAP] Robot → X={Xr:.1f} mm, Y={Yr:.1f} mm")
 
@@ -137,13 +140,8 @@ class PalletizingRobot:
         rect = cv2.minAreaRect(largest_contour)
         center, (width, height), angle = rect
         
-        
-        self.detected_width = width
-        self.detected_height = height
-        self.detected_angle = angle
-
         # Agregado: imprimir width, height y ángulo
-        print(f"[INFO] Width: {width:.1f}, Height: {height:.1f}, Angle: {angle:.1f}°")
+        # print(f"[INFO] Width: {width:.1f}, Height: {height:.1f}, Angle: {angle:.1f}°")
         
         # Ajuste de coordenadas al frame completo
         cx = int(center[0]) + self.cam_min_lim[0]
@@ -158,7 +156,7 @@ class PalletizingRobot:
         box[:, 1] =  box[:, 1] + self.cam_min_lim[1]
         frame = cv2.drawContours(frame, [box], 0, (0, 255, 0), 2) 
         frame = cv2.circle(frame, center, 5, (255, 0, 0), 10)
-        return frame, mask, center, angle, 1
+        return frame, mask, center, angle, width, height, 1
         
     def mozaic_generator(self,angle,count):
         pointhigh = [206.058,507.878,-400,-1.480,3.181, 92.352]
