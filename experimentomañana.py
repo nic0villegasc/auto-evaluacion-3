@@ -183,28 +183,30 @@ class PalletizingRobot:
                     blokmos1= [80.158,507.878,49.5,-1.480,3.181,-92.352]
                     blokmos1safe= [80.158,538.505,-300,-1.486,3.203,-92.353]
                     
+                    self._wait_for_step_confirmation("Movimiento 180.6")
 
                     self.robot.move_l_pose(np.array(pointhigh), speed=30, acc=20)
                     self.robot.wait_until_motion_complete()
 
-                    self._wait_for_step_confirmation("Movimiento 6")
+                    self._wait_for_step_confirmation("Movimiento 180.7")
 
                     self.robot.move_l_pose(np.array(blokmos1safe), speed=30, acc=20)
                     self.robot.wait_until_motion_complete()
                     
-                    self._wait_for_step_confirmation("Movimiento 7")
+                    self._wait_for_step_confirmation("Movimiento 180.8")
 
                     self.robot.move_l_pose(np.array(blokmos1), speed=30, acc=20)
                     self.robot.wait_until_motion_complete()
 
-                    self._wait_for_step_confirmation("Movimiento 8")
-
                     self.robot.open_gripper()
                     self.robot.wait_until_motion_complete()
+
+                    self._wait_for_step_confirmation("Movimiento 180.9")
+
                     self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
 
-                    self._wait_for_step_confirmation("Movimiento 9")
+                    self._wait_for_step_confirmation("Movimiento 180.10")
 
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
@@ -358,17 +360,25 @@ class PalletizingRobot:
                     blokmos1= [565.558,507.878,39.5,-1.480,3.181,-92.352]
                     blokmos1safe= [565.558,538.505,-300,-1.486,3.203,-92.353]
                     
-
+                    self._wait_for_step_confirmation("Movimiento 90.5")
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
+
+                    self._wait_for_step_confirmation("Movimiento 90.6")
                     self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
+
+                    self._wait_for_step_confirmation("Movimiento 90.7")
                     self.robot.move_l_pose(np.array(blokmos1), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
                     self.robot.open_gripper()
                     self.robot.wait_until_motion_complete()
+
+                    self._wait_for_step_confirmation("Movimiento 90.8")
                     self.robot.move_l_pose(np.array(blokmos1safe), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
+
+                    self._wait_for_step_confirmation("Movimiento 90.9")
                     self.robot.move_l_pose(np.array(pointhigh), speed=10, acc=20)
                     self.robot.wait_until_motion_complete()
 
@@ -637,17 +647,28 @@ class PalletizingRobot:
 
             self.robot.open_gripper()
             self.robot.wait_until_motion_complete()
+
+            self._wait_for_step_confirmation("Movimiento 90.1")
+
             self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
 
             self.robot.open_gripper()
             self.robot.wait_until_motion_complete()
+
+
+            self._wait_for_step_confirmation("Movimiento 90.2")
+
             self.robot.move_l_pose(np.array(pose), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
+
+            self._wait_for_step_confirmation("Movimiento 90.3")
             self.robot.move_l_pose(np.array(bajar), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
             self.robot.close_gripper()
             self.robot.wait_until_motion_complete()
+
+            self._wait_for_step_confirmation("Movimiento 90.4")
             self.robot.move_l_pose(np.array(levantar), speed=10, acc=20)
             self.robot.wait_until_motion_complete()
             self.mozaic_generator(angulo_primario,self.count_90)
